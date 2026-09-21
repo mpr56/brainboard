@@ -19,11 +19,14 @@ describe('persistDoc', () => {
     const p2 = persistDoc(second, boardId)
     await p2.whenSynced
 
-    const nodes = listNodes(second)
-    expect(nodes).toHaveLength(1)
-    expect(nodes[0]).toMatchObject({ x: 42, y: 7 })
-    expect(nodes[0]!.props).toEqual({ text: 'persisted' })
-    await p2.destroy()
+    try {
+      const nodes = listNodes(second)
+      expect(nodes).toHaveLength(1)
+      expect(nodes[0]).toMatchObject({ x: 42, y: 7 })
+      expect(nodes[0]!.props).toEqual({ text: 'persisted' })
+    } finally {
+      await p2.destroy()
+    }
   })
 
   it('keeps separate boards isolated', async () => {
@@ -37,7 +40,10 @@ describe('persistDoc', () => {
     const b = createDoc()
     const pb = persistDoc(b, 'board-b')
     await pb.whenSynced
-    expect(listNodes(b)).toHaveLength(0)
-    await pb.destroy()
+    try {
+      expect(listNodes(b)).toHaveLength(0)
+    } finally {
+      await pb.destroy()
+    }
   })
 })
