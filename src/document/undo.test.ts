@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createDoc, transact } from './schema'
-import { addNode, getNode, listNodes, updateNode } from './nodes'
+import { addNode, getNode, listNodes, updateNode, removeNode } from './nodes'
+import { addEdge, listEdges } from './edges'
 import { createUndoManager } from './undo'
 
 const text = { type: 'text', x: 0, y: 0, w: 200, h: 80, props: {} } as const
@@ -44,7 +45,11 @@ describe('createUndoManager', () => {
     expect(getNode(doc, id)!.h).toBe(120)
   })
 
-  it('treats one transaction as one undo step regardless of how many nodes it touches', () => {
+  it('collapses nested transact() calls into one undo step', () => {
+    // Yjs transactions are reentrant: nested transact() calls join the outer
+    // transaction. This test proves that multiple node updates within one
+    // transact() call produce exactly one undo step. This is independent of
+    // captureTimeout and enables multi-node drag gestures to undo atomically.
     const doc = createDoc()
     const a = addNode(doc, text)
     const b = addNode(doc, text)
@@ -69,5 +74,19 @@ describe('createUndoManager', () => {
     expect(getNode(doc, id)!.x).toBe(10)
     undo.undo()
     expect(getNode(doc, id)!.x).toBe(0)
+  })
+
+  it('undoes node deletion and its cascaded edge deletions in one step', () => {
+    const doc = createDoc()
+    const a = addNode(doc, text)
+    const b = addNode(doc, text)
+    addEdge(doc, { from: { nodeId: a }, to: { nodeId: b } })
+    const undo = createUndoManager(doc)
+    removeNode(doc, a)
+    expect(listNodes(doc)).toHaveLength(1)
+    expect(listEdges(doc)).toHaveLength(0)
+    undo.undo()
+    expect(listNodes(doc)).toHaveLength(2)
+    expect(listEdges(doc)).toHaveLength(1)
   })
 })
