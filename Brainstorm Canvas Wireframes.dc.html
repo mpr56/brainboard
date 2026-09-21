@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,300..800;1,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"><style>body{margin:0;background:#eae7df;font-family:"Shantell Sans",system-ui,sans-serif}a{color:#2d63d6}a:hover{color:#1a44a8}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px "IBM Plex Mono",monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 14px/1.2 "Shantell Sans",sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px "IBM Plex Mono",monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 "Shantell Sans",sans-serif;color:rgba(0,0,0,.6);max-width:620px}.dv-card{max-width:100%;background:#fdfcf9;border:2px solid #1a1a1a;border-radius:10px;box-shadow:4px 5px 0 rgba(26,26,26,.13);overflow:hidden}.dv-opt:target .dv-oid{background:#2d63d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.6 "Shantell Sans",sans-serif;color:rgba(0,0,0,.55)}</style></helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">From your answers — video node states, comments, pen, and a media-dense radial</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Video as a node, three states: muted loop → hover scrub → floating player</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">One node, no page changes</div><div style="margin-left:auto;font:500 9px 'IBM Plex Mono';color:#777">HOVER · CLICK · ESC</div></div>
+<div style="display:flex;height:300px;background:#fdfcf9;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+
+<div style="flex:1;border-right:2px dashed #ddd9cf;padding:14px 12px;display:flex;flex-direction:column;gap:9px">
+<div style="font:600 8.5px 'IBM Plex Mono';color:#777">RESTING</div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden">
+<div style="height:88px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);position:relative"><div style="position:absolute;left:6px;top:6px;padding:1px 5px;border:1.5px solid #1a1a1a;border-radius:3px;background:#fff;font:600 7.5px 'IBM Plex Mono'">LOOPING</div><div style="position:absolute;right:6px;bottom:6px;padding:1px 5px;background:#1a1a1a;color:#fff;border-radius:3px;font:600 7.5px 'IBM Plex Mono'">MUTED</div></div>
+<div style="padding:5px 7px;font:500 9px 'IBM Plex Mono'">teaser_cut_v3.mp4</div>
+</div>
+<div style="font:400 10.5px/1.35 'Shantell Sans';color:#8a8578">plays itself, quietly, forever. no play button to hunt for.</div>
+</div>
+
+<div style="flex:1;border-right:2px dashed #ddd9cf;padding:14px 12px;display:flex;flex-direction:column;gap:9px">
+<div style="font:600 8.5px 'IBM Plex Mono';color:#2d63d6">HOVERED</div>
+<div style="border:2.5px solid #2d63d6;border-radius:8px;background:#fff;overflow:hidden;box-shadow:3px 4px 0 rgba(45,99,214,.2)">
+<div style="height:88px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);position:relative"><div style="position:absolute;left:0;right:0;bottom:0;padding:6px 7px;background:rgba(253,252,249,.92);border-top:1.5px solid #1a1a1a"><div style="position:relative;height:9px"><div style="position:absolute;inset:1px 0;border:1.5px solid #1a1a1a;border-radius:5px;background:#fff"></div><div style="position:absolute;left:0;top:1px;bottom:1px;width:38%;border:1.5px solid #1a1a1a;border-radius:5px;background:#1a1a1a"></div><div style="position:absolute;left:62%;top:-2px;width:9px;height:13px;border:1.5px solid #2d63d6;border-radius:2px;background:#fff"></div></div></div><div style="position:absolute;right:6px;top:6px;display:flex;gap:4px"><div style="padding:2px 5px;border:1.5px solid #1a1a1a;border-radius:3px;background:#fff;font:600 7.5px 'IBM Plex Mono'">SOUND</div><div style="padding:2px 5px;border:1.5px solid #1a1a1a;border-radius:3px;background:#fff;font:600 7.5px 'IBM Plex Mono'">OPEN</div></div></div>
+<div style="padding:5px 7px;display:flex;justify-content:space-between"><div style="font:500 9px 'IBM Plex Mono'">teaser_cut_v3.mp4</div><div style="font:500 9px 'IBM Plex Mono';color:#2d63d6">1:02 / 2:41</div></div>
+</div>
+<div style="font:400 10.5px/1.35 'Shantell Sans';color:#8a8578">scrub without opening anything. drag the blue marker onto a node to link that second.</div>
+</div>
+
+<div style="flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:9px;background:rgba(26,26,26,.06)">
+<div style="font:600 8.5px 'IBM Plex Mono';color:#777">CLICKED</div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;background:#fdfcf9;overflow:hidden;box-shadow:5px 6px 0 rgba(26,26,26,.22)">
+<div style="display:flex;align-items:center;gap:5px;padding:4px 7px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea"><div style="font:600 9px 'Shantell Sans'">floating player</div><div style="margin-left:auto;font:600 8px 'IBM Plex Mono'">✕</div></div>
+<div style="height:76px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:15px solid #1a1a1a;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></div></div>
+<div style="padding:6px 7px;display:flex;gap:5px;flex-wrap:wrap"><div style="padding:3px 6px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 8.5px 'Shantell Sans';background:#e8a33d">clip</div><div style="padding:3px 6px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 8.5px 'Shantell Sans';background:#fff">pin frame</div><div style="padding:3px 6px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 8.5px 'Shantell Sans';background:#fff">notes</div></div>
+</div>
+<div style="font:400 10.5px/1.35 'Shantell Sans';color:#8a8578">floats above the board, draggable, canvas still pans behind it. see <a class="dv-oid" href="#2b">2b</a> for the full panel.</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Comments &amp; sharing, solo-first — threads pin to a node, or to a second of video</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">Q3 Campaign Brainstorm</div><div style="margin-left:auto;display:flex;align-items:center;gap:6px"><div style="width:19px;height:19px;border-radius:50%;border:2px solid #1a1a1a;background:#e8a33d;font:600 8px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">JR</div><div style="padding:4px 9px;border:2px solid #1a1a1a;border-radius:16px;background:#fff;font:600 10px 'Shantell Sans'">share ▾</div></div></div>
+<div style="display:flex;height:330px">
+<div style="flex:1;position:relative;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<div style="position:absolute;left:24px;top:30px;width:150px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden"><div style="height:78px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:4px 7px;font:500 9px 'IBM Plex Mono'">teaser_cut_v3.mp4</div></div>
+<div style="position:absolute;left:158px;top:20px;width:24px;height:24px;border:2px solid #1a1a1a;border-radius:50% 50% 50% 2px;background:#e8a33d;font:600 9px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">2</div>
+<div style="position:absolute;left:30px;top:150px;width:136px;padding:10px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:500 11px/1.3 'Shantell Sans'">what if the hero is the product?</div>
+<div style="position:absolute;left:190px;top:196px;width:210px;border:2px solid #1a1a1a;border-radius:10px;background:#fff;box-shadow:4px 5px 0 rgba(26,26,26,.16);overflow:hidden">
+<div style="padding:5px 9px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea;display:flex;align-items:center;gap:6px"><div style="font:600 9px 'IBM Plex Mono';color:#2d63d6">ON VIDEO @ 00:32</div><div style="margin-left:auto;font:600 8px 'IBM Plex Mono'">RESOLVE</div></div>
+<div style="padding:9px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;gap:7px"><div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #1a1a1a;background:#e8a33d;flex:none"></div><div style="font:400 10.5px/1.3 'Shantell Sans'"><b>Jay</b> this cut is the one. lose the intro card?</div></div>
+<div style="display:flex;gap:7px"><div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #1a1a1a;background:#cfdcf7;flex:none"></div><div style="font:400 10.5px/1.3 'Shantell Sans'"><b>Mara</b> agreed — see pg 3 of the brief</div></div>
+<div style="border:1.5px dashed #b9b5ab;border-radius:6px;padding:5px 7px;font:400 10px 'Shantell Sans';color:#999">reply… @ to mention, / to attach</div>
+</div>
+</div>
+<div style="position:absolute;right:12px;top:24px;width:150px;border:2px solid #1a1a1a;border-radius:10px;background:#fff;overflow:hidden"><div style="padding:5px 8px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea;font:600 9px 'IBM Plex Mono'">SHARE THIS BOARD</div><div style="padding:9px;display:flex;flex-direction:column;gap:7px"><div style="border:1.5px solid #1a1a1a;border-radius:5px;padding:4px 6px;font:400 9.5px 'IBM Plex Mono';color:#666">brnstrm.app/q3-camp…</div><div style="display:flex;gap:5px"><div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 9px 'Shantell Sans';background:#1a1a1a;color:#fff">can comment</div><div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 9px 'Shantell Sans'">can edit</div></div><div style="font:400 10px/1.3 'Shantell Sans';color:#888">your board stays yours — guests land in comment mode</div></div></div>
+</div>
+<div style="width:150px;border-left:2px solid #1a1a1a;background:#f7f5ef;padding:11px 10px">
+<div style="font:600 9px 'IBM Plex Mono';color:#777">ALL COMMENTS · 4</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:7px">
+<div style="border:2px solid #1a1a1a;border-radius:6px;background:#fff;padding:6px 7px"><div style="font:600 8.5px 'IBM Plex Mono';color:#2d63d6">VIDEO 00:32</div><div style="font:400 10px/1.3 'Shantell Sans'">lose the intro card?</div></div>
+<div style="border:1.5px solid #cfcabe;border-radius:6px;padding:6px 7px"><div style="font:600 8.5px 'IBM Plex Mono';color:#888">PDF pg 3</div><div style="font:400 10px/1.3 'Shantell Sans';color:#666">numbers are stale</div></div>
+<div style="border:1.5px solid #cfcabe;border-radius:6px;padding:6px 7px;opacity:.55"><div style="font:600 8.5px 'IBM Plex Mono';color:#888">RESOLVED</div><div style="font:400 10px/1.3 'Shantell Sans'">moodboard swap</div></div>
+</div>
+<div style="margin-top:12px;font:600 9px 'IBM Plex Mono';color:#777">HISTORY</div>
+<div style="margin-top:6px;font:400 10px/1.4 'Shantell Sans';color:#666">you · 20 min ago<br>Mara · yesterday</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3c">
+<div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Tablet + pen — same board, thumb-reachable dial, ink becomes a connector</div>
+<div class="dv-card" style="width:600px;background:#eae7df">
+<div style="padding:16px;display:flex;justify-content:center">
+<div style="width:540px;border:3px solid #1a1a1a;border-radius:20px;background:#fdfcf9;padding:9px;box-shadow:5px 6px 0 rgba(26,26,26,.18)">
+<div style="position:relative;height:300px;border:2px solid #1a1a1a;border-radius:11px;overflow:hidden;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<div style="position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1.5px solid #1a1a1a;background:rgba(243,241,234,.95)"><div style="font:700 11px 'Shantell Sans'">Q3 Campaign</div><div style="margin-left:auto;font:500 8.5px 'IBM Plex Mono';color:#777">PEN · INK MODE</div></div>
+<svg viewBox="0 0 520 300" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"><path d="M130 118 Q186 92 238 78"></path><path d="M132 132 Q190 178 244 202" stroke-dasharray="6 6"></path></svg>
+<div style="position:absolute;left:18px;top:92px;width:112px;padding:10px;border:2.5px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:700 11.5px/1.25 'Shantell Sans'">October launch</div>
+<div style="position:absolute;left:240px;top:44px;width:140px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden"><div style="height:74px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);position:relative"><div style="position:absolute;right:5px;bottom:5px;padding:1px 4px;background:#1a1a1a;color:#fff;border-radius:3px;font:600 7.5px 'IBM Plex Mono'">MUTED LOOP</div></div><div style="padding:4px 6px;font:500 8.5px 'IBM Plex Mono'">teaser_cut_v3.mp4</div></div>
+<div style="position:absolute;left:246px;top:186px;width:128px;padding:9px;border:2px solid #1a1a1a;background:#f7dfae;transform:rotate(-2deg);font:500 10.5px/1.3 'Shantell Sans'">handwriting stays handwriting</div>
+<div style="position:absolute;left:398px;top:150px;width:96px;height:96px;border:2px dashed #cfcabe;border-radius:50%"></div>
+<div style="position:absolute;left:424px;top:176px;width:44px;height:44px;border:2.5px solid #1a1a1a;border-radius:50%;background:#e8a33d;font:700 15px 'Shantell Sans';display:flex;align-items:center;justify-content:center">+</div>
+<div style="position:absolute;left:404px;top:140px;padding:3px 7px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;font:600 9px 'Shantell Sans'">note</div>
+<div style="position:absolute;left:472px;top:158px;padding:3px 7px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;font:600 9px 'Shantell Sans'">rec</div>
+<div style="position:absolute;left:472px;top:216px;padding:3px 7px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;font:600 9px 'Shantell Sans'">file</div>
+<div style="position:absolute;left:400px;top:234px;padding:3px 7px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;font:600 9px 'Shantell Sans'">photo</div>
+<div style="position:absolute;left:14px;bottom:12px;display:flex;gap:6px;padding:5px 7px;border:2px solid #1a1a1a;border-radius:24px;background:#fff"><div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:50%;background:#1a1a1a"></div><div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:50%;background:#2d63d6"></div><div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:50%;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">⌫</div><div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:50%;background:#fff;font:600 9px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">↩</div></div>
+<sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:14px;bottom:56px;width:210px;font:400 10.5px/1.3 'Shantell Sans';color:#8a8578">draw a stroke between two nodes and it snaps into a real connector</div>
+</sc-if>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3d">
+<div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Radial at scale — branches collapse into counted clusters so 200 nodes still read</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">Research dump · 214 nodes</div><div style="margin-left:auto;display:flex;gap:5px"><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:14px;background:#1a1a1a;color:#fff;font:600 9.5px 'Shantell Sans'">media only</div><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:14px;font:600 9.5px 'Shantell Sans'">depth 2</div></div></div>
+<div style="position:relative;height:330px;background:#fdfcf9">
+<svg viewBox="0 0 596 330" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2.5"><path d="M262 158 Q190 116 118 84"></path><path d="M262 172 Q186 214 112 250"></path><path d="M334 156 Q404 108 470 76"></path><path d="M334 174 Q402 216 464 252"></path><path d="M298 130 V70"></path><path d="M470 76 Q502 62 534 52" stroke-width="1.5"></path><path d="M470 76 Q498 92 528 104" stroke-width="1.5"></path></svg>
+<div style="position:absolute;left:246px;top:140px;width:104px;padding:13px 8px;border:3px solid #1a1a1a;border-radius:60px;background:#e8a33d;text-align:center;font:700 12px/1.15 'Shantell Sans'">Research dump</div>
+<div style="position:absolute;left:38px;top:58px;padding:7px 10px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 11px 'Shantell Sans'">Interviews <span style="font:600 8.5px 'IBM Plex Mono';color:#fff;background:#1a1a1a;border-radius:9px;padding:1px 5px">42</span></div>
+<div style="position:absolute;left:34px;top:226px;padding:7px 10px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 11px 'Shantell Sans'">Teardowns <span style="font:600 8.5px 'IBM Plex Mono';color:#fff;background:#1a1a1a;border-radius:9px;padding:1px 5px">67</span></div>
+<div style="position:absolute;left:250px;top:38px;padding:6px 9px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 10.5px 'Shantell Sans'">Open questions <span style="font:600 8.5px 'IBM Plex Mono';color:#fff;background:#1a1a1a;border-radius:9px;padding:1px 5px">9</span></div>
+<div style="position:absolute;left:430px;top:46px;width:112px;border:2.5px solid #2d63d6;border-radius:8px;background:#fff;overflow:hidden"><div style="height:56px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);position:relative"><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:#ddd9cf"><div style="width:44%;height:4px;background:#1a1a1a"></div></div></div><div style="padding:3px 6px;font:500 8px 'IBM Plex Mono'">user_07.mp4 · 12:04</div></div>
+<div style="position:absolute;left:420px;top:222px;display:flex;flex-wrap:wrap;gap:5px;width:150px">
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;background:#cfdcf7;font:600 8.5px 'IBM Plex Mono'">18 ▶</div>
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;background:#fff;font:600 8.5px 'IBM Plex Mono'">31 ▭</div>
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;background:#fff;font:600 8.5px 'IBM Plex Mono'">7 PDF</div>
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:12px;background:#fff;font:600 8.5px 'IBM Plex Mono'">4 DOCX</div>
+<div style="font:400 10px/1.3 'Shantell Sans';color:#8a8578;width:100%">tap a cluster to expand it in place</div>
+</div>
+<div style="position:absolute;left:14px;bottom:12px;display:flex;gap:6px;align-items:center;padding:5px 9px;border:2px solid #1a1a1a;border-radius:24px;background:#fff"><div style="font:600 8.5px 'IBM Plex Mono';color:#777">FOCUS</div><div style="padding:2px 7px;border:1.5px solid #1a1a1a;border-radius:12px;background:#1a1a1a;color:#fff;font:600 9px 'Shantell Sans'">this branch</div><div style="padding:2px 7px;border:1.5px solid #1a1a1a;border-radius:12px;font:600 9px 'Shantell Sans'">whole board</div></div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “build out <a class="dv-oid" href="#3a">3a</a> as the real spec for the video node” · “redo <a class="dv-oid" href="#2a">2a</a> for tablet like <a class="dv-oid" href="#3c">3c</a>” · “now the present / walkthrough mode”</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Elements &amp; menus — the media-specific moments</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Drop anything — the canvas guesses the node type before you let go</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea">
+<div style="width:9px;height:9px;border-radius:50%;background:#1a1a1a"></div>
+<div style="font:600 12px 'Shantell Sans';color:#1a1a1a">Q3 Campaign · dropping 3 files</div>
+<div style="margin-left:auto;font:500 9.5px 'IBM Plex Mono';color:#777">AUTOSAVED</div>
+</div>
+<div style="position:relative;height:340px;background:#fdfcf9;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<div style="position:absolute;inset:0;background:rgba(45,99,214,.06)"></div>
+<div style="position:absolute;left:26px;top:22px;width:118px;padding:9px 11px;border:2px solid #b9b5ab;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:500 11px 'Shantell Sans';color:#aaa">existing note</div>
+<div style="position:absolute;left:26px;top:96px;width:118px;height:70px;border:2px solid #b9b5ab;border-radius:8px;background:repeating-linear-gradient(135deg,#f0eee8 0 6px,#e6e3db 6px 12px)"></div>
+
+<div style="position:absolute;left:176px;top:54px;width:300px;height:210px;border:3px dashed #2d63d6;border-radius:14px;background:rgba(45,99,214,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+<div style="font:700 15px 'Shantell Sans';color:#2d63d6">drop here to add</div>
+<div style="font:500 10px 'IBM Plex Mono';color:#2d63d6;opacity:.75">3 FILES · 84 MB</div>
+<div style="display:flex;gap:7px;margin-top:4px">
+<div style="padding:4px 8px;border:1.5px solid #2d63d6;border-radius:20px;font:600 9px 'IBM Plex Mono';color:#2d63d6;background:#fff">MP4</div>
+<div style="padding:4px 8px;border:1.5px solid #2d63d6;border-radius:20px;font:600 9px 'IBM Plex Mono';color:#2d63d6;background:#fff">PDF</div>
+<div style="padding:4px 8px;border:1.5px solid #2d63d6;border-radius:20px;font:600 9px 'IBM Plex Mono';color:#2d63d6;background:#fff">DOCX</div>
+</div>
+<div style="font:400 11px 'Shantell Sans';color:#5d6b86;max-width:150px;text-align:center">each file becomes its own node</div>
+</div>
+
+<div style="position:absolute;left:352px;top:188px;transform:rotate(-5deg);display:flex;flex-direction:column;gap:5px;filter:drop-shadow(5px 7px 0 rgba(26,26,26,.18))">
+<div style="width:150px;height:86px;border:2px solid #1a1a1a;border-radius:8px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center">
+<div style="width:0;height:0;border-left:16px solid #1a1a1a;border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:4px"></div>
+</div>
+<div style="font:500 10px 'IBM Plex Mono';color:#1a1a1a;background:#fff;border:1.5px solid #1a1a1a;border-radius:4px;padding:2px 5px;align-self:flex-start">teaser_cut_v3.mp4</div>
+</div>
+<div style="position:absolute;left:470px;top:243px;width:14px;height:14px;border-left:2px solid #1a1a1a;border-bottom:2px solid #1a1a1a;transform:rotate(-45deg)"></div>
+
+<div style="position:absolute;left:18px;bottom:14px;display:flex;gap:6px;align-items:center;padding:6px 9px;border:2px solid #1a1a1a;border-radius:24px;background:#fff">
+<div style="font:600 9px 'IBM Plex Mono';color:#1a1a1a">PASTE A LINK</div>
+<div style="width:1px;height:14px;background:#d3cfc5"></div>
+<div style="font:400 10px 'Shantell Sans';color:#777">youtube · figma · loom · drive</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Video opened up: scrub, clip a moment, wire that timestamp to another node</div>
+<div class="dv-card" style="width:600px">
+<div style="position:relative;height:382px;background:#fdfcf9;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<div style="position:absolute;inset:0;background:rgba(26,26,26,.38)"></div>
+<div style="position:absolute;left:18px;top:16px;width:520px;border:2px solid #1a1a1a;border-radius:12px;background:#fdfcf9;box-shadow:6px 8px 0 rgba(26,26,26,.25);overflow:hidden">
+<div style="display:flex;align-items:center;gap:8px;padding:7px 11px;border-bottom:2px solid #1a1a1a;background:#f3f1ea">
+<div style="font:600 11.5px 'Shantell Sans';color:#1a1a1a">teaser_cut_v3.mp4</div>
+<div style="font:500 9px 'IBM Plex Mono';color:#777">02:41 · 1080p</div>
+<div style="margin-left:auto;display:flex;gap:6px">
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:4px;font:600 9px 'IBM Plex Mono'">MIN</div>
+<div style="padding:3px 7px;border:1.5px solid #1a1a1a;border-radius:4px;font:600 9px 'IBM Plex Mono'">✕</div>
+</div>
+</div>
+<div style="display:flex">
+<div style="flex:1;padding:11px">
+<div style="height:150px;border:2px solid #1a1a1a;border-radius:6px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center;position:relative">
+<div style="font:500 9px 'IBM Plex Mono';color:#8b8578;position:absolute;bottom:7px;left:9px">VIDEO FRAME</div>
+<div style="width:0;height:0;border-left:20px solid #1a1a1a;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:5px"></div>
+</div>
+<div style="position:relative;height:30px;margin-top:11px">
+<div style="position:absolute;left:0;right:0;top:11px;height:7px;border:2px solid #1a1a1a;border-radius:6px;background:#fff"></div>
+<div style="position:absolute;left:0;top:11px;width:44%;height:7px;border:2px solid #1a1a1a;border-radius:6px;background:#1a1a1a"></div>
+<div style="position:absolute;left:18%;top:5px;width:11px;height:19px;border:2px solid #2d63d6;border-radius:3px;background:#fff"></div>
+<div style="position:absolute;left:44%;top:3px;width:13px;height:23px;border:2px solid #1a1a1a;border-radius:3px;background:#e8a33d"></div>
+<div style="position:absolute;left:72%;top:5px;width:11px;height:19px;border:2px solid #2d63d6;border-radius:3px;background:#fff"></div>
+</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px">
+<div style="padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;font:600 10px 'Shantell Sans';background:#e8a33d">clip → new node</div>
+<div style="padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;font:600 10px 'Shantell Sans';background:#fff">pin this frame</div>
+<div style="padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;font:600 10px 'Shantell Sans';background:#fff">comment @ 1:12</div>
+</div>
+</div>
+<div style="width:178px;border-left:2px solid #1a1a1a;padding:11px 10px;background:#f7f5ef">
+<div style="font:600 9px 'IBM Plex Mono';color:#777;margin-bottom:8px">MOMENTS ON THIS CLIP</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="border:1.5px solid #1a1a1a;border-radius:6px;background:#fff;padding:6px 7px">
+<div style="font:600 9px 'IBM Plex Mono';color:#2d63d6">00:32</div>
+<div style="font:400 10.5px/1.3 'Shantell Sans'">→ links to “hero shot?” note</div>
+</div>
+<div style="border:1.5px solid #1a1a1a;border-radius:6px;background:#fff;padding:6px 7px">
+<div style="font:600 9px 'IBM Plex Mono';color:#1a1a1a">01:12</div>
+<div style="font:400 10.5px/1.3 'Shantell Sans'">→ clipped into board</div>
+</div>
+<div style="border:1.5px dashed #b9b5ab;border-radius:6px;padding:6px 7px;font:400 10.5px/1.3 'Shantell Sans';color:#999">drag a moment onto any node to link it</div>
+</div>
+<div style="font:600 9px 'IBM Plex Mono';color:#777;margin:12px 0 6px">TRANSCRIPT</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="height:7px;border-radius:4px;background:#ddd9cf"></div>
+<div style="height:7px;border-radius:4px;background:#ddd9cf;width:85%"></div>
+<div style="height:7px;border-radius:4px;background:#ddd9cf;width:60%"></div>
+</div>
+</div>
+</div>
+</div>
+<sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;right:16px;bottom:14px;width:150px;font:400 11px/1.35 'Shantell Sans';color:#fdfcf9;transform:rotate(-2deg)">the canvas stays live behind — nothing ever opens in a new page</div>
+</sc-if>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Node menus: radial quick-actions, format bar, connector styles</div>
+<div class="dv-card" style="width:600px">
+<div style="position:relative;height:340px;background:#fdfcf9;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<div style="position:absolute;left:40px;top:34px;display:flex;gap:5px;align-items:center;padding:6px 8px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;box-shadow:3px 4px 0 rgba(26,26,26,.15)">
+<div style="font:700 12px 'Shantell Sans';padding:2px 6px">B</div>
+<div style="font:400 12px 'Shantell Sans';font-style:italic;padding:2px 6px">I</div>
+<div style="width:1px;height:16px;background:#d3cfc5"></div>
+<div style="width:15px;height:15px;border:1.5px solid #1a1a1a;border-radius:3px;background:#e8a33d"></div>
+<div style="width:15px;height:15px;border:1.5px solid #1a1a1a;border-radius:3px;background:#2d63d6"></div>
+<div style="width:15px;height:15px;border:1.5px solid #1a1a1a;border-radius:3px;background:#fff"></div>
+<div style="width:1px;height:16px;background:#d3cfc5"></div>
+<div style="font:600 9px 'IBM Plex Mono';padding:2px 5px">SHAPE</div>
+<div style="font:600 9px 'IBM Plex Mono';padding:2px 5px">↗ LINK</div>
+</div>
+
+<div style="position:absolute;left:150px;top:132px;width:136px;padding:12px;border:2.5px solid #2d63d6;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:500 12px/1.3 'Shantell Sans'">what if the hero is the product?</div>
+<div style="position:absolute;left:144px;top:126px;width:8px;height:8px;border:2px solid #2d63d6;background:#fff"></div>
+<div style="position:absolute;left:280px;top:126px;width:8px;height:8px;border:2px solid #2d63d6;background:#fff"></div>
+<div style="position:absolute;left:144px;top:190px;width:8px;height:8px;border:2px solid #2d63d6;background:#fff"></div>
+<div style="position:absolute;left:280px;top:190px;width:8px;height:8px;border:2px solid #2d63d6;background:#fff"></div>
+
+<div style="position:absolute;left:100px;top:90px;width:240px;height:150px;border-radius:50%;border:2px dashed #cfcabe"></div>
+<div style="position:absolute;left:198px;top:74px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#fff;font:600 10px 'Shantell Sans'">+ child</div>
+<div style="position:absolute;left:300px;top:106px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#fff;font:600 10px 'Shantell Sans'">attach file</div>
+<div style="position:absolute;left:306px;top:198px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#e8a33d;font:600 10px 'Shantell Sans'">record clip</div>
+<div style="position:absolute;left:196px;top:244px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#fff;font:600 10px 'Shantell Sans'">comment</div>
+<div style="position:absolute;left:66px;top:198px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#fff;font:600 10px 'Shantell Sans'">duplicate</div>
+<div style="position:absolute;left:62px;top:106px;padding:5px 9px;border:2px solid #1a1a1a;border-radius:20px;background:#fff;font:600 10px 'Shantell Sans'">style</div>
+
+<div style="position:absolute;right:16px;top:42px;width:158px;border:2px solid #1a1a1a;border-radius:10px;background:#fff;box-shadow:4px 5px 0 rgba(26,26,26,.15);overflow:hidden">
+<div style="padding:6px 9px;border-bottom:1.5px solid #1a1a1a;font:600 9px 'IBM Plex Mono';background:#f3f1ea">CONNECTOR</div>
+<div style="padding:9px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:0;border-top:2px solid #1a1a1a"></div><div style="font:400 10px 'Shantell Sans'">solid</div></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:0;border-top:2px dashed #1a1a1a"></div><div style="font:400 10px 'Shantell Sans'">loose idea</div></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:0;border-top:3px solid #e8a33d"></div><div style="font:400 10px 'Shantell Sans'">strong</div></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:0;border-top:2px solid #2d63d6"></div><div style="font:400 10px 'Shantell Sans'">timestamp</div></div>
+<div style="border-top:1.5px solid #e2ded4;padding-top:8px;font:400 10.5px/1.3 'Shantell Sans';color:#777">label the line: <span style="border-bottom:1.5px solid #1a1a1a;color:#1a1a1a">“because…”</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Home: boards plus one media library that every board can pull from</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;height:340px">
+<div style="width:132px;border-right:2px solid #1a1a1a;background:#f3f1ea;padding:12px 10px;display:flex;flex-direction:column;gap:7px">
+<div style="font:700 14px 'Shantell Sans';margin-bottom:6px">brainstorm.</div>
+<div style="padding:5px 8px;border:2px solid #1a1a1a;border-radius:7px;background:#fff;font:600 11px 'Shantell Sans'">My boards</div>
+<div style="padding:5px 8px;font:400 11px 'Shantell Sans';color:#666">Shared with me</div>
+<div style="padding:5px 8px;font:400 11px 'Shantell Sans';color:#666">Templates</div>
+<div style="padding:5px 8px;font:400 11px 'Shantell Sans';color:#666">Media library</div>
+<div style="padding:5px 8px;font:400 11px 'Shantell Sans';color:#666">Archive</div>
+<div style="margin-top:auto;border:1.5px dashed #b9b5ab;border-radius:7px;padding:7px;font:400 9.5px/1.3 'Shantell Sans';color:#888">4.2 GB of 20 GB<div style="height:5px;border:1.5px solid #1a1a1a;border-radius:4px;margin-top:5px;background:linear-gradient(to right,#e8a33d 22%,#fff 22%)"></div></div>
+</div>
+<div style="flex:1;padding:12px 14px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+<div style="flex:1;border:2px solid #1a1a1a;border-radius:20px;padding:5px 10px;font:400 11px 'Shantell Sans';color:#999">search boards, files, even words inside videos</div>
+<div style="padding:6px 11px;border:2px solid #1a1a1a;border-radius:20px;background:#e8a33d;font:700 11px 'Shantell Sans'">+ new</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px">
+<div style="border:2px solid #1a1a1a;border-radius:8px;overflow:hidden;background:#fff"><div style="height:58px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:6px 7px"><div style="font:600 10.5px 'Shantell Sans'">Q3 Campaign</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">12 ▶ · 30 ▭</div></div></div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;overflow:hidden;background:#fff"><div style="height:58px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:6px 7px"><div style="font:600 10.5px 'Shantell Sans'">Onboarding v2</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">3 ▶ · 18 ▭</div></div></div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;overflow:hidden;background:#fff"><div style="height:58px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:6px 7px"><div style="font:600 10.5px 'Shantell Sans'">Research dump</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">7 ▶ · 61 ▭</div></div></div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;overflow:hidden;background:#fff"><div style="height:58px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:6px 7px"><div style="font:600 10.5px 'Shantell Sans'">Naming</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">0 ▶ · 44 ▭</div></div></div>
+<div style="border:2px solid #1a1a1a;border-radius:8px;overflow:hidden;background:#fff"><div style="height:58px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:6px 7px"><div style="font:600 10.5px 'Shantell Sans'">Offsite plan</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">2 ▶ · 9 ▭</div></div></div>
+<div style="border:2px dashed #b9b5ab;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 11px/1.3 'Shantell Sans';color:#999;text-align:center;padding:8px">drop a folder<br>to start a board</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “take <a class="dv-oid" href="#2b">2b</a> further — show the comment thread on a timestamp” · “<a class="dv-oid" href="#2c">2c</a> but menus in a right sidebar instead of radial” · “wireframe the present / walkthrough mode”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Four canvas models — same content, four ways to organise it</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Freeform infinite canvas — anything anywhere, draw the links yourself</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea">
+<div style="font:700 12px 'Shantell Sans'">Q3 Campaign Brainstorm</div>
+<div style="padding:2px 6px;border:1.5px solid #1a1a1a;border-radius:4px;font:500 8.5px 'IBM Plex Mono'">EDITING</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+<div style="width:19px;height:19px;border-radius:50%;border:2px solid #1a1a1a;background:#e8a33d"></div>
+<div style="width:19px;height:19px;border-radius:50%;border:2px solid #1a1a1a;background:#2d63d6"></div>
+<div style="padding:4px 9px;border:2px solid #1a1a1a;border-radius:16px;font:600 10px 'Shantell Sans'">share</div>
+</div>
+</div>
+<div style="display:flex;height:330px">
+<div style="width:42px;border-right:2px solid #1a1a1a;background:#f7f5ef;display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px 0">
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#1a1a1a;color:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">↖</div>
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">T</div>
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">▭</div>
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">▶</div>
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">✎</div>
+<div style="width:26px;height:26px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;font:600 10px 'IBM Plex Mono';display:flex;align-items:center;justify-content:center">↗</div>
+<div style="margin-top:auto;width:26px;height:26px;border:2px solid #1a1a1a;border-radius:50%;background:#e8a33d;font:700 13px 'Shantell Sans';display:flex;align-items:center;justify-content:center">+</div>
+</div>
+<div style="flex:1;position:relative;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:22px 22px">
+<svg viewBox="0 0 556 330" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2"><path d="M140 150 Q168 100 196 84"></path><path d="M140 158 Q190 200 236 226"></path><path d="M346 96 Q374 84 398 76"></path><path d="M300 140 Q340 170 382 192" stroke="#2d63d6" stroke-dasharray="5 5"></path></svg>
+<div style="position:absolute;left:16px;top:126px;width:120px;padding:11px;border:2.5px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:700 12px/1.25 'Shantell Sans'">Launch the thing in October</div>
+<div style="position:absolute;left:192px;top:26px;width:152px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden">
+<div style="height:80px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center;position:relative"><div style="width:0;height:0;border-left:15px solid #1a1a1a;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px"></div><div style="position:absolute;right:5px;bottom:5px;padding:1px 4px;background:#1a1a1a;color:#fff;font:500 8px 'IBM Plex Mono';border-radius:3px">1:42</div></div>
+<div style="padding:4px 7px;font:500 9px 'IBM Plex Mono'">teaser_cut_v3.mp4</div>
+</div>
+<div style="position:absolute;left:394px;top:22px;width:120px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden"><div style="height:66px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:4px 7px;font:500 9px 'IBM Plex Mono'">moodboard.png</div></div>
+<div style="position:absolute;left:198px;top:206px;width:148px;padding:9px 10px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;display:flex;gap:8px;align-items:center"><div style="width:22px;height:28px;border:1.5px solid #1a1a1a;border-radius:2px;background:repeating-linear-gradient(#efece4 0 3px,#fff 3px 6px)"></div><div><div style="font:600 10.5px 'Shantell Sans'">brief_final.pdf</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">14 pages · pg 3 pinned</div></div></div>
+<div style="position:absolute;left:378px;top:158px;width:126px;padding:10px;border:2px solid #1a1a1a;background:#f7dfae;transform:rotate(2deg);font:500 11px/1.3 'Shantell Sans';box-shadow:3px 3px 0 rgba(26,26,26,.15)">the gif from slack — does it still land?</div>
+<div style="position:absolute;right:10px;bottom:10px;width:78px;height:52px;border:2px solid #1a1a1a;border-radius:5px;background:#fff"><div style="position:absolute;left:8px;top:9px;width:16px;height:9px;background:#d3cfc5"></div><div style="position:absolute;left:30px;top:6px;width:22px;height:13px;background:#d3cfc5"></div><div style="position:absolute;left:34px;top:26px;width:18px;height:11px;background:#d3cfc5"></div><div style="position:absolute;left:6px;top:20px;width:40px;height:24px;border:1.5px solid #2d63d6"></div></div>
+<sc-if value="{{ showNotes }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:14px;bottom:14px;width:130px;font:400 10.5px/1.3 'Shantell Sans';color:#8a8578;transform:rotate(-1.5deg)">video keeps playing while you pan — it is a node, not a popup</div>
+</sc-if>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Radial mind map — one centre, auto-arranged branches, media as leaves</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">Q3 Campaign Brainstorm</div><div style="margin-left:auto;display:flex;gap:6px"><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:14px;font:600 9.5px 'Shantell Sans'">auto-tidy</div><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:14px;font:600 9.5px 'Shantell Sans'">collapse all</div></div></div>
+<div style="display:flex;height:330px">
+<div style="flex:1;position:relative;background:#fdfcf9">
+<svg viewBox="0 0 440 330" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2.5"><path d="M210 165 Q160 120 96 96"></path><path d="M210 165 Q170 210 104 236"></path><path d="M240 158 Q300 110 356 78"></path><path d="M240 170 Q300 200 352 216"></path><path d="M356 78 Q380 60 404 46" stroke-width="1.5"></path></svg>
+<div style="position:absolute;left:158px;top:143px;width:126px;padding:12px 10px;border:3px solid #1a1a1a;border-radius:60px;background:#e8a33d;text-align:center;font:700 12px/1.2 'Shantell Sans'">October launch</div>
+<div style="position:absolute;left:20px;top:72px;padding:7px 9px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 11px 'Shantell Sans'">Audience</div>
+<div style="position:absolute;left:22px;top:216px;padding:7px 9px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 11px 'Shantell Sans'">Channels</div>
+<div style="position:absolute;left:318px;top:44px;border:2px solid #1a1a1a;border-radius:8px;background:#fff;overflow:hidden;width:96px"><div style="height:52px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:12px solid #1a1a1a;border-top:8px solid transparent;border-bottom:8px solid transparent"></div></div><div style="padding:3px 6px;font:500 8.5px 'IBM Plex Mono'">teaser.mp4</div></div>
+<div style="position:absolute;left:312px;top:198px;padding:7px 9px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:600 11px 'Shantell Sans'">Budget<span style="font:500 8.5px 'IBM Plex Mono';color:#888"> +3</span></div>
+<div style="position:absolute;left:8px;bottom:10px;display:flex;gap:6px"><div style="padding:4px 8px;border:2px solid #1a1a1a;border-radius:14px;background:#fff;font:600 9.5px 'Shantell Sans'">tab = sibling</div><div style="padding:4px 8px;border:2px solid #1a1a1a;border-radius:14px;background:#fff;font:600 9.5px 'Shantell Sans'">⏎ = child</div></div>
+</div>
+<div style="width:154px;border-left:2px solid #1a1a1a;background:#f7f5ef;padding:11px 10px">
+<div style="font:600 9px 'IBM Plex Mono';color:#777">SELECTED NODE</div>
+<div style="margin-top:8px;border:2px solid #1a1a1a;border-radius:7px;background:#fff;overflow:hidden"><div style="height:60px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:5px 7px;font:500 9px 'IBM Plex Mono'">teaser.mp4</div></div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+<div style="font:400 10.5px 'Shantell Sans'">Play on canvas <span style="float:right;border:1.5px solid #1a1a1a;border-radius:10px;padding:0 8px;background:#e8a33d;font-size:9px">on</span></div>
+<div style="font:400 10.5px 'Shantell Sans'">Loop muted <span style="float:right;border:1.5px solid #1a1a1a;border-radius:10px;padding:0 8px;background:#fff;font-size:9px">off</span></div>
+<div style="font:400 10.5px 'Shantell Sans'">Show transcript <span style="float:right;border:1.5px solid #1a1a1a;border-radius:10px;padding:0 8px;background:#fff;font-size:9px">off</span></div>
+</div>
+<div style="margin-top:12px;font:600 9px 'IBM Plex Mono';color:#777">LINKED TO</div>
+<div style="margin-top:6px;display:flex;flex-direction:column;gap:5px"><div style="border:1.5px solid #1a1a1a;border-radius:5px;padding:4px 6px;font:400 10px 'Shantell Sans';background:#fff">Audience · 00:32</div><div style="border:1.5px solid #1a1a1a;border-radius:5px;padding:4px 6px;font:400 10px 'Shantell Sans';background:#fff">brief_final.pdf</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Outline + canvas — type fast on the left, watch the map build on the right</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">Q3 Campaign Brainstorm</div><div style="margin-left:auto;display:flex;gap:0;border:2px solid #1a1a1a;border-radius:14px;overflow:hidden"><div style="padding:3px 10px;background:#1a1a1a;color:#fff;font:600 9.5px 'Shantell Sans'">split</div><div style="padding:3px 10px;font:600 9.5px 'Shantell Sans'">outline</div><div style="padding:3px 10px;font:600 9.5px 'Shantell Sans'">map</div></div></div>
+<div style="display:flex;height:330px">
+<div style="width:232px;border-right:2px solid #1a1a1a;padding:12px 11px;background:#fff">
+<div style="display:flex;flex-direction:column;gap:8px;font-family:'Shantell Sans'">
+<div style="font:700 12px 'Shantell Sans'">▾ October launch</div>
+<div style="padding-left:14px;font:500 11.5px 'Shantell Sans'">▾ Audience</div>
+<div style="padding-left:28px;font:400 11px 'Shantell Sans';color:#444">existing customers</div>
+<div style="padding-left:28px;display:flex;align-items:center;gap:6px"><div style="padding:1px 5px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 7.5px 'IBM Plex Mono';background:#e8a33d">MP4</div><div style="font:400 11px 'Shantell Sans'">interview_02</div><div style="font:500 8.5px 'IBM Plex Mono';color:#888">3:20</div></div>
+<div style="padding-left:14px;font:500 11.5px 'Shantell Sans'">▾ Creative</div>
+<div style="padding-left:28px;display:flex;align-items:center;gap:6px"><div style="padding:1px 5px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 7.5px 'IBM Plex Mono'">PNG</div><div style="font:400 11px 'Shantell Sans'">moodboard</div></div>
+<div style="padding-left:28px;display:flex;align-items:center;gap:6px"><div style="padding:1px 5px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 7.5px 'IBM Plex Mono'">PDF</div><div style="font:400 11px 'Shantell Sans'">brief_final</div></div>
+<div style="padding-left:28px;font:400 11px 'Shantell Sans';color:#444">hero is the product?</div>
+<div style="padding-left:14px;font:500 11.5px 'Shantell Sans';color:#999">▸ Channels <span style="font:500 8.5px 'IBM Plex Mono'">6</span></div>
+<div style="padding-left:14px;margin-top:2px;border-left:2px solid #2d63d6;padding-bottom:2px;font:400 11px 'Shantell Sans';color:#2d63d6">| typing here…</div>
+</div>
+</div>
+<div style="flex:1;position:relative;background-image:radial-gradient(#d8d4ca 1.3px,transparent 1.3px);background-size:20px 20px">
+<svg viewBox="0 0 366 330" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2"><path d="M70 74 H120"></path><path d="M70 74 Q92 150 122 176"></path><path d="M188 176 Q222 140 252 118"></path><path d="M188 186 Q224 220 254 244"></path></svg>
+<div style="position:absolute;left:14px;top:58px;padding:7px 9px;border:2.5px solid #1a1a1a;border-radius:40px;background:#e8a33d;font:700 11px 'Shantell Sans'">October</div>
+<div style="position:absolute;left:120px;top:58px;padding:6px 8px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:500 10.5px 'Shantell Sans'">Audience</div>
+<div style="position:absolute;left:122px;top:162px;padding:6px 8px;border:2px solid #1a1a1a;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;background:#fff;font:500 10.5px 'Shantell Sans'">Creative</div>
+<div style="position:absolute;left:250px;top:88px;width:92px;border:2px solid #1a1a1a;border-radius:7px;background:#fff;overflow:hidden"><div style="height:48px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px)"></div><div style="padding:3px 5px;font:500 8px 'IBM Plex Mono'">moodboard.png</div></div>
+<div style="position:absolute;left:250px;top:226px;width:100px;border:2px solid #1a1a1a;border-radius:7px;background:#fff;overflow:hidden"><div style="height:50px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:12px solid #1a1a1a;border-top:8px solid transparent;border-bottom:8px solid transparent"></div></div><div style="padding:3px 5px;font:500 8px 'IBM Plex Mono'">interview_02.mp4</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Typed node graph — every node has a kind, every line has a meaning</div>
+<div class="dv-card" style="width:600px">
+<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid #1a1a1a;background:#f3f1ea"><div style="font:700 12px 'Shantell Sans'">Q3 Campaign Brainstorm</div><div style="margin-left:auto;display:flex;gap:5px"><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:4px;font:600 9px 'IBM Plex Mono'">FILTER</div><div style="padding:3px 8px;border:1.5px solid #1a1a1a;border-radius:4px;font:600 9px 'IBM Plex Mono'">GROUP BY TYPE</div></div></div>
+<div style="position:relative;height:330px;background:linear-gradient(#efece4 1px,transparent 1px) 0 0/100% 26px,linear-gradient(90deg,#efece4 1px,transparent 1px) 0 0/26px 100%,#fdfcf9">
+<svg viewBox="0 0 596 330" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke="#1a1a1a" stroke-width="2"><path d="M172 98 H244"></path><path d="M172 118 Q210 190 250 222"></path><path d="M420 118 Q400 180 360 222"></path><path d="M406 98 H352" stroke="#2d63d6"></path></svg>
+<div style="position:absolute;left:186px;top:80px;background:#fdfcf9;padding:0 4px;font:500 9px 'IBM Plex Mono';color:#666">supports</div>
+<div style="position:absolute;left:196px;top:158px;background:#fdfcf9;padding:0 4px;font:500 9px 'IBM Plex Mono';color:#666">evidence</div>
+<div style="position:absolute;left:356px;top:80px;background:#fdfcf9;padding:0 4px;font:500 9px 'IBM Plex Mono';color:#2d63d6">@00:32</div>
+<div style="position:absolute;left:392px;top:158px;background:#fdfcf9;padding:0 4px;font:500 9px 'IBM Plex Mono';color:#666">blocks</div>
+
+<div style="position:absolute;left:34px;top:74px;width:136px;border:2.5px solid #1a1a1a;border-radius:6px;background:#fff;overflow:hidden"><div style="padding:3px 7px;border-bottom:1.5px solid #1a1a1a;background:#e8a33d;font:600 8.5px 'IBM Plex Mono'">DECISION</div><div style="padding:8px 8px;font:600 11px/1.25 'Shantell Sans'">Launch in October</div></div>
+<div style="position:absolute;left:246px;top:64px;width:110px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;overflow:hidden"><div style="padding:3px 7px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea;font:600 8.5px 'IBM Plex Mono'">NOTE</div><div style="padding:7px;font:400 10.5px/1.25 'Shantell Sans'">hero is the product</div></div>
+<div style="position:absolute;left:408px;top:56px;width:142px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;overflow:hidden"><div style="padding:3px 7px;border-bottom:1.5px solid #1a1a1a;background:#cfdcf7;font:600 8.5px 'IBM Plex Mono'">VIDEO · 2:41</div><div style="height:62px;background:repeating-linear-gradient(135deg,#e8e5dd 0 7px,#dedad0 7px 14px);display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:14px solid #1a1a1a;border-top:9px solid transparent;border-bottom:9px solid transparent"></div></div><div style="padding:4px 7px;font:500 8.5px 'IBM Plex Mono'">teaser_cut_v3.mp4</div></div>
+<div style="position:absolute;left:250px;top:212px;width:118px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;overflow:hidden"><div style="padding:3px 7px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea;font:600 8.5px 'IBM Plex Mono'">SOURCE · PDF</div><div style="padding:7px;font:400 10.5px/1.25 'Shantell Sans'">brief_final.pdf<div style="font:500 8.5px 'IBM Plex Mono';color:#888;margin-top:2px">pg 3 highlighted</div></div></div>
+<div style="position:absolute;left:396px;top:214px;width:0;height:0"></div>
+<div style="position:absolute;left:404px;top:212px;width:120px;border:2px solid #1a1a1a;border-radius:6px;background:#fff;overflow:hidden"><div style="padding:3px 7px;border-bottom:1.5px solid #1a1a1a;background:#f3f1ea;font:600 8.5px 'IBM Plex Mono'">RISK</div><div style="padding:7px;font:400 10.5px/1.25 'Shantell Sans'">legal review takes 3 wks</div></div>
+
+<div style="position:absolute;left:14px;bottom:12px;display:flex;gap:7px;align-items:center;padding:5px 9px;border:2px solid #1a1a1a;border-radius:6px;background:#fff">
+<div style="font:600 8.5px 'IBM Plex Mono';color:#777">TYPES</div>
+<div style="display:flex;gap:5px"><div style="padding:2px 6px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 8px 'IBM Plex Mono';background:#e8a33d">DECISION</div><div style="padding:2px 6px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 8px 'IBM Plex Mono'">NOTE</div><div style="padding:2px 6px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 8px 'IBM Plex Mono';background:#cfdcf7">MEDIA</div><div style="padding:2px 6px;border:1.5px solid #1a1a1a;border-radius:3px;font:600 8px 'IBM Plex Mono'">RISK</div></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “go deeper on <a class="dv-oid" href="#1a">1a</a>, it is the one” · “mix <a class="dv-oid" href="#1b">1b</a>’s side panel into <a class="dv-oid" href="#1d">1d</a>” · “show all four handling 200 nodes without clutter”</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { showNotes: this.props.showNotes ?? true };
+  }
+}
+</script>
+</body>
+</html>
