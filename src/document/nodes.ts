@@ -9,6 +9,25 @@ export type NodeInit = Omit<Node, 'id' | 'z' | 'parent'> & {
   parent?: NodeId | null
 }
 
+/** Check if a Y.Map has all structurally required fields with correct types. */
+function isValidNode(m: Y.Map<unknown>): boolean {
+  const type = m.get('type')
+  const x = m.get('x')
+  const y = m.get('y')
+  const w = m.get('w')
+  const h = m.get('h')
+  const z = m.get('z')
+
+  return (
+    typeof type === 'string' &&
+    typeof x === 'number' && Number.isFinite(x) &&
+    typeof y === 'number' && Number.isFinite(y) &&
+    typeof w === 'number' && Number.isFinite(w) &&
+    typeof h === 'number' && Number.isFinite(h) &&
+    typeof z === 'number' && Number.isFinite(z)
+  )
+}
+
 function toNode(id: NodeId, m: Y.Map<unknown>): Node {
   return {
     id,
@@ -52,12 +71,14 @@ export function addNode(doc: Y.Doc, init: NodeInit, origin: Origin = 'user'): No
 
 export function getNode(doc: Y.Doc, id: NodeId): Node | null {
   const m = nodesMap(doc).get(id)
-  return m ? toNode(id, m) : null
+  return m && isValidNode(m) ? toNode(id, m) : null
 }
 
 export function listNodes(doc: Y.Doc): Node[] {
   const out: Node[] = []
-  nodesMap(doc).forEach((m, id) => out.push(toNode(id, m)))
+  nodesMap(doc).forEach((m, id) => {
+    if (isValidNode(m)) out.push(toNode(id, m))
+  })
   return out.sort((a, b) => a.z - b.z)
 }
 
