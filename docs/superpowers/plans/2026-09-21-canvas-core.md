@@ -1707,7 +1707,7 @@ The built-in text type is registered at the bottom of this file in Step 7. That 
 `src/render/nodes/TextNode.test.tsx`:
 
 ```tsx
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Node } from '../../types'
 import { TEXT_NODE_TYPE } from './TextNode'
@@ -1753,7 +1753,9 @@ describe('TextNode', () => {
     render(<View node={node} state={{ selected: true, editing: true }} onEdit={onEdit} onMeasure={vi.fn()} />)
     const body = screen.getByTestId('text-node-body')
     body.textContent = 'changed'
-    body.dispatchEvent(new FocusEvent('blur', { bubbles: true }))
+    // React 19 delivers onBlur via a delegated `focusout` listener on the root
+    // container — a native `blur` event, even with bubbles: true, never reaches it.
+    fireEvent.focusOut(body)
     expect(onEdit).toHaveBeenCalledWith({ props: { text: 'changed' } })
   })
 
@@ -1802,8 +1804,10 @@ function TextNodeView({ node, state, onEdit, onMeasure }: NodeViewProps) {
         if (next !== text) onEdit({ props: { ...node.props, text: next } })
       }}
       style={{
+        // No minHeight here: this element's scrollHeight is what gets reported
+        // through onMeasure, and stretching it to the parent would mean a node
+        // could grow as you type but never shrink when you delete.
         width: '100%',
-        minHeight: '100%',
         padding: '10px 12px',
         boxSizing: 'border-box',
         outline: 'none',
