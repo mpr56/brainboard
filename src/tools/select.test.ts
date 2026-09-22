@@ -107,4 +107,53 @@ describe('selectTool', () => {
     selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
     expect(spy).not.toHaveBeenCalled()
   })
+
+  // Regression: an abandoned marquee (no matching onUp — pointercancel, or the
+  // pointer leaves the window) must not hijack the next gesture. Without the
+  // fix, the stale `marqueeOrigin` from this abandoned gesture keeps winning
+  // in onMove/onUp, so the subsequent drag's onUp takes the marquee branch,
+  // overwrites the selection from the stale rect, and returns before ever
+  // reaching the drag-commit branch — silently dropping the move.
+  it('recovers from an abandoned marquee gesture and still executes the next drag', () => {
+    const h = harness()
+    // Start a marquee, but abandon it — no matching onUp.
+    selectTool.onDown!(ev('down', { x: -50, y: -50 }), h.ctx)
+    // A fresh gesture begins: a hit, so this should be a plain drag.
+    selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+    selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
+    selectTool.onUp!(ev('up', { x: 110, y: 70 }), h.ctx)
+
+    expect([...h.sel()]).toEqual([h.a])
+    expect(getNode(h.doc, h.a)).toMatchObject({ x: 100, y: 60 })
+  })
+
+  // Regression, reverse direction: an abandoned drag (no matching onUp) must
+  // not leave a stale `drag` sitting in module state after a subsequent
+  // marquee gesture completes normally. Without the fix, `drag` from the
+  // abandoned gesture is never cleared when the marquee starts, so it
+  // survives the marquee's onDown/onMove/onUp untouched (those all take the
+  // marqueeOrigin branch) and is still sitting there afterward. A stray
+  // move/up pair arriving later with no matching onDown (pointer chatter)
+  // then resurrects that stale drag and commits an uncommanded move using
+  // its long-expired captured start position.
+  it('recovers from an abandoned drag gesture and does not let it resurrect on a later stray move', () => {
+    const h = harness()
+    const undo = createUndoManager(h.doc)
+    // Start a drag on node a, but abandon it — no matching onUp.
+    selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+    // A fresh gesture begins: no hit, so it's a marquee. This one completes normally.
+    selectTool.onDown!(ev('down', { x: -50, y: -50 }), h.ctx)
+    selectTool.onMove!(ev('move', { x: 150, y: 150 }), h.ctx)
+    expect(h.mq()).toEqual({ x: -50, y: -50, w: 200, h: 200 })
+    selectTool.onUp!(ev('up', { x: 150, y: 150 }), h.ctx)
+    expect([...h.sel()]).toEqual([h.a])
+    expect(h.mq()).toBeNull()
+
+    // A stray move/up pair arrives with no matching onDown.
+    selectTool.onMove!(ev('move', { x: 200, y: 200 }), h.ctx)
+    selectTool.onUp!(ev('up', { x: 200, y: 200 }), h.ctx)
+
+    expect(getNode(h.doc, h.a)).toMatchObject({ x: 0, y: 0 })
+    expect(undo.canUndo()).toBe(false)
+  })
 })
