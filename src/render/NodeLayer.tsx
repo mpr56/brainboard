@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { Node, NodeId } from '../types'
 import { getNodeType } from './registry'
 
@@ -7,9 +8,24 @@ type Props = {
   editingId: NodeId | null
   onEdit: (id: NodeId, patch: Partial<Node>) => void
   onMeasure: (id: NodeId, h: number) => void
+  onStartEdit: (id: NodeId) => void
 }
 
-export function NodeLayer({ nodes, selection, editingId, onEdit, onMeasure }: Props) {
+export function NodeLayer({ nodes, selection, editingId, onEdit, onMeasure, onStartEdit }: Props) {
+  // Entering edit mode flips the node's DOM region to contentEditable, but
+  // that alone does not move focus there. Without an explicit focus, a
+  // double-click starts an edit session the keyboard can't reach. This runs
+  // after the contentEditable attribute has committed to the DOM (same
+  // render pass as `editingId`, so by the time this effect fires the node's
+  // view has already re-rendered with `state.editing = true`).
+  useEffect(() => {
+    if (editingId === null) return
+    const el = document.querySelector<HTMLElement>(
+      `[data-node-id="${CSS.escape(editingId)}"] [contenteditable="true"]`,
+    )
+    el?.focus()
+  }, [editingId])
+
   return (
     <>
       {nodes.map((node) => {
@@ -20,6 +36,7 @@ export function NodeLayer({ nodes, selection, editingId, onEdit, onMeasure }: Pr
             key={node.id}
             data-node-id={node.id}
             data-part="body"
+            onDoubleClick={() => onStartEdit(node.id)}
             style={{
               position: 'absolute',
               left: node.x,
