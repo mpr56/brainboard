@@ -2514,6 +2514,13 @@ export const selectTool: Tool = {
   name: 'select',
 
   onDown(e: WorldEvent, ctx: ToolContext) {
+    // A new pointer-down always starts a fresh gesture. Without this, an
+    // abandoned gesture (pointercancel, pointer leaving the window) leaves its
+    // variable set, and since onMove/onUp both test marqueeOrigin first, a
+    // stale marquee silently hijacks the next drag.
+    drag = null
+    marqueeOrigin = null
+
     if (!e.hit) {
       marqueeOrigin = e.worldPoint
       ctx.setMarquee({ x: e.worldPoint.x, y: e.worldPoint.y, w: 0, h: 0 })
