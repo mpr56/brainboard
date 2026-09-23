@@ -36,6 +36,10 @@ export function App() {
 
   const gestures = useCameraGestures(camera, setCamera)
   const rootRef = useRef<HTMLDivElement>(null)
+  // True between a pointer-down and its matching up/cancel. onPointerMove is a
+  // viewport prop, so it also fires on bare hover with nothing in flight; this
+  // is what lets those events be dropped before they cost anything.
+  const gestureActive = useRef(false)
 
   const tool: Tool = toolName === 'select' ? selectTool : connectTool
 
@@ -89,6 +93,7 @@ export function App() {
         gestures.beginPan(e.clientX, e.clientY)
         return
       }
+      gestureActive.current = true
       e.currentTarget.setPointerCapture(e.pointerId)
       const we = toWorldEvent(e, 'down')
       // A pointer-down that lands anywhere but the node being edited ends the
@@ -123,6 +128,18 @@ export function App() {
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (gestures.movePan(e.clientX, e.clientY)) return
+      // Bare hover, or any move outside a gesture, gets no further than here.
+      // Everything below is expensive: toWorldEvent does a
+      // getBoundingClientRect plus an elementFromPoint (two forced
+      // layout/hit-test reads) and a hitTestDom ancestor walk, and the
+      // forceRender re-reconciles ConnectorLayer and every mounted node. None
+      // of it can change anything when no tool gesture is in flight.
+      //
+      // The buttons check is the self-healing half: if an `up` were ever
+      // missed, the first buttonless move clears the flag rather than leaving
+      // every subsequent hover doing the full work forever.
+      if (e.buttons === 0) gestureActive.current = false
+      if (!gestureActive.current) return
       tool.onMove?.(toWorldEvent(e, 'move'), ctx)
       forceRender((n) => n + 1)
     },
@@ -131,6 +148,7 @@ export function App() {
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
+      gestureActive.current = false
       gestures.endPan()
       tool.onUp?.(toWorldEvent(e, 'up'), ctx)
       forceRender((n) => n + 1)
@@ -159,6 +177,7 @@ export function App() {
   const { endPan } = gestures
   useEffect(() => {
     const onCancel = () => {
+      gestureActive.current = false
       resetSelectTool()
       resetConnectTool()
       // A pan is the third gesture kind, and it lives in a different place
