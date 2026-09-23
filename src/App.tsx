@@ -5,8 +5,10 @@ import { transact } from './document/schema'
 import { useEdges, useNodes } from './document/hooks'
 import { useBoard } from './useBoard'
 import { ConnectorLayer } from './render/ConnectorLayer'
+import { nodeMeta, resolveAnchor } from './geometry/anchors'
+import { routeEdge } from './geometry/routeEdge'
 import { NodeLayer } from './render/NodeLayer'
-import { Overlay } from './render/Overlay'
+import { Overlay, type PendingPath } from './render/Overlay'
 import { World } from './render/World'
 import { getNodeType } from './render/registry'
 import { visibleNodes } from './render/visibleNodes'
@@ -218,14 +220,23 @@ export function App() {
   // tool state that the forceRender after each pointer event republishes.
   const drag = dragPreview()
 
+  // Rule 4: the preview is routed by `geometry/`, with the same anchor
+  // resolution and the same routing style the committed edge will get. It used
+  // to be a straight line drawn from a locally-duplicated node centre, so the
+  // in-flight connector and the edge it produced disagreed in shape — and
+  // would have disagreed in position too once Plan 2 lands scrubber anchors.
   const pending = pendingEdge()
-  const pendingLine =
-    pending && nodesById.has(pending.fromNodeId)
-      ? {
-          from: centreOf(nodesById.get(pending.fromNodeId)!),
-          to: pending.to,
-        }
-      : null
+  const pendingFrom = pending ? nodesById.get(pending.fromNodeId) : undefined
+  const pendingPath: PendingPath | null = pendingFrom
+    ? {
+        points: routeEdge(
+          resolveAnchor(pendingFrom, pending!.fromLocator, nodeMeta(pendingFrom)),
+          pending!.to,
+          edgeStyleKind,
+        ).points,
+        kind: edgeStyleKind,
+      }
+    : null
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -305,9 +316,7 @@ export function App() {
           dragPreview={drag}
         />
       </World>
-      <Overlay camera={camera} marquee={marquee} pending={pendingLine} />
+      <Overlay camera={camera} marquee={marquee} pending={pendingPath} />
     </div>
   )
 }
-
-const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })

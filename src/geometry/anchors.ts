@@ -7,6 +7,18 @@ const centre = (node: Node): Point => ({ x: node.x + node.w / 2, y: node.y + nod
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
 /**
+ * The media metadata a time/page locator needs, read off the node's props.
+ * Plan 2 replaces the body of this with a real asset lookup; every caller
+ * that resolves an anchor goes through it so there is one place to change.
+ */
+export function nodeMeta(node: Node): AssetMeta {
+  return {
+    duration: node.props.duration as number | undefined,
+    pages: node.props.pages as number | undefined,
+  }
+}
+
+/**
  * Maps a locator to a point in world space on the given node. A time locator
  * resolves onto the scrubber track, so a timestamp link visually lands on the
  * moment it refers to rather than on the card as a whole.

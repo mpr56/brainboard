@@ -1,16 +1,23 @@
 import { addEdge } from '../document/edges'
 import { getNode } from '../document/nodes'
-import type { Anchor, NodeId, Point } from '../types'
+import type { Anchor, Locator, NodeId, Point } from '../types'
 import type { Tool, ToolContext, WorldEvent } from './types'
 
 type Pending = { fromNodeId: NodeId; fromLocatorTime: number | null; to: Point }
 
 let pending: Pending | null = null
 
-export function pendingEdge(): { fromNodeId: NodeId; to: Point } | null {
+export type PendingEdge = { fromNodeId: NodeId; fromLocator?: Locator; to: Point }
+
+export function pendingEdge(): PendingEdge | null {
+  if (!pending) return null
   // `to` is copied, not shared: a caller writing to `result.to.x` would
   // otherwise reach straight into this module's gesture state.
-  return pending ? { fromNodeId: pending.fromNodeId, to: { ...pending.to } } : null
+  // The locator comes out too, so the preview can resolve the same anchor the
+  // committed edge will (a scrubber link starts on the scrubber, not the
+  // node's centre).
+  const { locator } = anchorFrom(pending)
+  return { fromNodeId: pending.fromNodeId, fromLocator: locator, to: { ...pending.to } }
 }
 
 export function resetConnectTool(): void {

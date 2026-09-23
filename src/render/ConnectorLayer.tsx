@@ -1,16 +1,8 @@
-import { resolveAnchor } from '../geometry/anchors'
+import { nodeMeta, resolveAnchor } from '../geometry/anchors'
 import { routeEdge } from '../geometry/routeEdge'
-import type { AssetMeta, Edge, Node, NodeId } from '../types'
+import type { Edge, Node, NodeId } from '../types'
 
 type Props = { edges: Edge[]; nodesById: Map<NodeId, Node> }
-
-/** Media metadata needed by time/page locators. Plan 2 replaces this with a real asset lookup. */
-function metaOf(node: Node): AssetMeta {
-  return {
-    duration: node.props.duration as number | undefined,
-    pages: node.props.pages as number | undefined,
-  }
-}
 
 /**
  * `style.arrow` is stored on every edge, so it has to be painted. Markers
@@ -61,8 +53,8 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
         const to = nodesById.get(edge.to.nodeId)
         if (!from || !to) return null
 
-        const a = resolveAnchor(from, edge.from.locator, metaOf(from))
-        const b = resolveAnchor(to, edge.to.locator, metaOf(to))
+        const a = resolveAnchor(from, edge.from.locator, nodeMeta(from))
+        const b = resolveAnchor(to, edge.to.locator, nodeMeta(to))
         const path = routeEdge(a, b, edge.style.kind)
         const marker = `url(#${markerId(edge.style.color)})`
         const { arrow } = edge.style

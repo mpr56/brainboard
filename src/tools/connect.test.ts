@@ -67,6 +67,26 @@ describe('connectTool', () => {
     expect(pendingEdge()).toEqual({ fromNodeId: h.a, to: { x: 200, y: 90 } })
   })
 
+  // The preview resolves its start point with the same resolveAnchor call the
+  // committed edge uses, so it needs the locator too. Without it a "link this
+  // moment" drag would preview from the node's centre and commit to the
+  // scrubber — two different places.
+  it('exposes the pending from-locator so the preview resolves the same anchor', () => {
+    const h = harness()
+    connectTool.onDown!(
+      ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'scrubber' } }),
+      h.ctx,
+    )
+    connectTool.onMove!(ev('move', { x: 200, y: 90 }), h.ctx)
+    expect(pendingEdge()!.fromLocator).toEqual({ kind: 'time', t: 0 })
+  })
+
+  it('leaves the from-locator unset for a plain body drag', () => {
+    const h = harness()
+    connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+    expect(pendingEdge()!.fromLocator).toBeUndefined()
+  })
+
   it('returns a copy of the pending endpoint, not the live gesture state', () => {
     const h = harness()
     connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)

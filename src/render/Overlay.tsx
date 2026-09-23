@@ -1,10 +1,18 @@
 import { worldToScreen, type Camera } from '../camera'
-import type { Point, Rect } from '../types'
+import { pathD } from '../geometry/routeEdge'
+import type { EdgeStyleKind, Point, Rect } from '../types'
+
+/**
+ * The in-flight connector, already routed in world space by `geometry/`
+ * (rule 4). The Overlay only maps the points into screen space and paints
+ * them; it computes no geometry of its own.
+ */
+export type PendingPath = { points: Point[]; kind: EdgeStyleKind }
 
 type Props = {
   camera: Camera
   marquee: Rect | null
-  pending: { from: Point; to: Point } | null
+  pending: PendingPath | null
 }
 
 /**
@@ -19,8 +27,11 @@ export function Overlay({ camera, marquee, pending }: Props) {
       }
     : null
 
-  const line = pending
-    ? { a: worldToScreen(pending.from, camera), b: worldToScreen(pending.to, camera) }
+  const pendingD = pending
+    ? pathD(
+        pending.points.map((p) => worldToScreen(p, camera)),
+        pending.kind,
+      )
     : null
 
   return (
@@ -40,13 +51,12 @@ export function Overlay({ camera, marquee, pending }: Props) {
           strokeWidth={1}
         />
       )}
-      {line && (
-        <line
+      {pendingD && (
+        <path
           data-testid="pending-edge"
-          x1={line.a.x}
-          y1={line.a.y}
-          x2={line.b.x}
-          y2={line.b.y}
+          data-edge-style={pending!.kind}
+          d={pendingD}
+          fill="none"
           stroke="#2d63d6"
           strokeWidth={2}
           strokeDasharray="4 4"
