@@ -78,6 +78,13 @@ export function App() {
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.button === 1) {
+        // Capture before returning. Without it the pointer-up is delivered to
+        // whatever is under the cursor at release — the Toolbar is a sibling
+        // of the viewport, so its events never bubble here — and `endPan`,
+        // which only the viewport's onPointerUp calls, never runs. The pan
+        // then survives the gesture and the next bare mouse move drags the
+        // board with no button held.
+        e.currentTarget.setPointerCapture(e.pointerId)
         gestures.beginPan(e.clientX, e.clientY)
         return
       }
@@ -144,10 +151,19 @@ export function App() {
   // and `rootRef.current` still null. A listener attached to that null
   // would-be element never attaches at all, for the component's whole life.
   // `window` always exists, so the listener is live from the first commit.
+  // `endPan` is pulled out of `gestures` because it alone is referentially
+  // stable (its own useCallback has empty deps and it writes only to a ref),
+  // so it can be an honest dependency here without re-attaching the listener
+  // on every render the way the whole `gestures` object would.
+  const { endPan } = gestures
   useEffect(() => {
     const onCancel = () => {
       resetSelectTool()
       resetConnectTool()
+      // A pan is the third gesture kind, and it lives in a different place
+      // (the camera hook, not module-level tool state). A cancelled pan that
+      // is not ended here sticks exactly like an uncaptured one.
+      endPan()
       // Module-level tool state is now clear, but the marquee box is React
       // state that only the (never-fired) onUp would have cleared, and the
       // pending-connector line is recomputed from pendingEdge() below on
@@ -158,7 +174,7 @@ export function App() {
     }
     window.addEventListener('pointercancel', onCancel)
     return () => window.removeEventListener('pointercancel', onCancel)
-  }, [])
+  }, [endPan])
 
   const onAddText = useCallback(() => {
     const { w, h } = getNodeType('text').defaultSize()

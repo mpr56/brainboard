@@ -119,6 +119,35 @@ test('one undo after an edit shows the reverted text on screen', async ({ page }
   await expect(body).toHaveText('New idea')
 })
 
+// Regression: the middle-button branch returned before setPointerCapture, so a
+// release over the Toolbar (a sibling of the viewport, whose events never
+// bubble to it) never reached the handler that ends the pan. The board then
+// followed every subsequent bare mouse move with no button held.
+test('a middle-drag released off the viewport does not leave the board panning', async ({
+  page,
+}) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(700, 600) // end the edit session
+  const body = page.getByTestId('text-node-body').first()
+
+  // Middle-drag the board, then release with the cursor over the toolbar.
+  await page.mouse.move(400, 500)
+  await page.mouse.down({ button: 'middle' })
+  await page.mouse.move(340, 440, { steps: 5 })
+  await page.mouse.move(40, 30, { steps: 5 })
+  await page.mouse.up({ button: 'middle' })
+
+  const afterPan = await body.boundingBox()
+  if (!afterPan) throw new Error('expected the node to be visible')
+
+  // Bare moves, no button held: the board must not budge.
+  await page.mouse.move(500, 500)
+  await page.mouse.move(800, 300, { steps: 5 })
+
+  const afterHover = await body.boundingBox()
+  expect(afterHover).toEqual(afterPan)
+})
+
 test('pointercancel clears an in-flight marquee instead of leaving a ghost box', async ({ page }) => {
   // Start a marquee drag on empty canvas and leave it in flight (no pointerup).
   await page.mouse.move(300, 300)
