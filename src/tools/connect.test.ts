@@ -3,7 +3,7 @@ import { createDoc } from '../document/schema'
 import { addNode, listNodes } from '../document/nodes'
 import { listEdges } from '../document/edges'
 import { createUndoManager } from '../document/undo'
-import type { NodeId, Point, Rect } from '../types'
+import type { EdgeStyleKind, NodeId, Point, Rect } from '../types'
 import { connectTool, pendingEdge, resetConnectTool } from './connect'
 import type { ToolContext, WorldEvent } from './types'
 
@@ -18,6 +18,7 @@ function harness() {
   const b = addNode(doc, { type: 'text', x: 300, y: 0, w: 100, h: 50, props: {} })
   let selection = new Set<NodeId>()
   let marquee: Rect | null = null
+  let edgeStyleKind: EdgeStyleKind = 'curve'
   const ctx: ToolContext = {
     doc,
     get nodes() { return listNodes(doc) },
@@ -25,8 +26,15 @@ function harness() {
     setSelection: (s) => { selection = s },
     get marquee() { return marquee },
     setMarquee: (r) => { marquee = r },
+    get edgeStyleKind() { return edgeStyleKind },
   }
-  return { doc, a, b, ctx }
+  return {
+    doc,
+    a,
+    b,
+    ctx,
+    chooseStyle: (kind: EdgeStyleKind) => { edgeStyleKind = kind },
+  }
 }
 
 describe('connectTool', () => {
@@ -68,6 +76,27 @@ describe('connectTool', () => {
     snapshot.to.x = -1
 
     expect(pendingEdge()).toEqual({ fromNodeId: h.a, to: { x: 200, y: 90 } })
+  })
+
+  // DoD 3 requires all three routing styles to be reachable. The tool used to
+  // hardcode DEFAULT_EDGE_STYLE, so the toolbar's choice never arrived.
+  it.each(['curve', 'elbow', 'straight'] as const)(
+    'creates the edge with the chosen %s style',
+    (kind) => {
+      const h = harness()
+      h.chooseStyle(kind)
+      connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      connectTool.onUp!(ev('up', { x: 350, y: 25 }, { hit: { nodeId: h.b, part: 'body' } }), h.ctx)
+      expect(listEdges(h.doc)[0]!.style.kind).toBe(kind)
+    },
+  )
+
+  it('leaves the rest of the default style intact when a kind is chosen', () => {
+    const h = harness()
+    h.chooseStyle('elbow')
+    connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+    connectTool.onUp!(ev('up', { x: 350, y: 25 }, { hit: { nodeId: h.b, part: 'body' } }), h.ctx)
+    expect(listEdges(h.doc)[0]!.style).toEqual({ kind: 'elbow', arrow: 'end', color: '#1a1a1a' })
   })
 
   it('creates nothing when released over empty canvas', () => {

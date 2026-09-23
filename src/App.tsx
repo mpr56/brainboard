@@ -16,7 +16,7 @@ import { hitTestDom } from './tools/hitTest'
 import { resetSelectTool, selectTool } from './tools/select'
 import type { Tool, WorldEvent } from './tools/types'
 import { Toolbar } from './ui/Toolbar'
-import type { Node, NodeId, Point, Rect } from './types'
+import type { EdgeStyleKind, Node, NodeId, Point, Rect } from './types'
 
 const BOARD_ID = 'default'
 
@@ -31,6 +31,7 @@ export function App() {
   const [selection, setSelection] = useState<Set<NodeId>>(new Set())
   const [marquee, setMarquee] = useState<Rect | null>(null)
   const [editingId, setEditingId] = useState<NodeId | null>(null)
+  const [edgeStyleKind, setEdgeStyleKind] = useState<EdgeStyleKind>('curve')
   const [, forceRender] = useState(0)
 
   const gestures = useCameraGestures(camera, setCamera)
@@ -39,8 +40,8 @@ export function App() {
   const tool: Tool = toolName === 'select' ? selectTool : connectTool
 
   const ctx = useMemo(
-    () => ({ doc, nodes, selection, setSelection, marquee, setMarquee }),
-    [doc, nodes, selection, marquee],
+    () => ({ doc, nodes, selection, setSelection, marquee, setMarquee, edgeStyleKind }),
+    [doc, nodes, selection, marquee, edgeStyleKind],
   )
 
   // Ruling 2: World's mount effect keys its ResizeObserver lifecycle off
@@ -258,6 +259,8 @@ export function App() {
         onZoom={(factor) =>
           setCamera((c) => zoomAt(c, { x: viewport.w / 2, y: viewport.h / 2 }, factor))
         }
+        edgeStyle={edgeStyleKind}
+        onEdgeStyle={setEdgeStyleKind}
       />
       <World
         camera={camera}

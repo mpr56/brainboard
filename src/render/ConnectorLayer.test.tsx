@@ -56,3 +56,45 @@ describe('ConnectorLayer', () => {
     expect(screen.getByTestId('edge-e3').getAttribute('d')).toBe('M 50 38 L 450 25')
   })
 })
+
+describe('arrow heads', () => {
+  // `style.arrow` is stored on every edge and was painted nowhere.
+  it('marks the end of an edge whose arrow is "end"', () => {
+    render(<ConnectorLayer edges={[edge]} nodesById={nodesById} />)
+    const path = screen.getByTestId('edge-e1')
+    expect(path.getAttribute('marker-end')).toBe('url(#arrow-1a1a1a)')
+    expect(path.getAttribute('marker-start')).toBeNull()
+    expect(document.querySelector('marker#arrow-1a1a1a')).not.toBeNull()
+  })
+
+  it('marks both ends when the arrow is "both"', () => {
+    const both: Edge = { ...edge, id: 'e5', style: { ...edge.style, arrow: 'both' } }
+    render(<ConnectorLayer edges={[both]} nodesById={nodesById} />)
+    const path = screen.getByTestId('edge-e5')
+    expect(path.getAttribute('marker-end')).toBe('url(#arrow-1a1a1a)')
+    expect(path.getAttribute('marker-start')).toBe('url(#arrow-1a1a1a)')
+  })
+
+  it('marks neither end, and defines no marker, when the arrow is "none"', () => {
+    const plain: Edge = { ...edge, id: 'e6', style: { ...edge.style, arrow: 'none' } }
+    const { container } = render(<ConnectorLayer edges={[plain]} nodesById={nodesById} />)
+    const path = screen.getByTestId('edge-e6')
+    expect(path.getAttribute('marker-end')).toBeNull()
+    expect(path.getAttribute('marker-start')).toBeNull()
+    expect(container.querySelector('marker')).toBeNull()
+  })
+})
+
+describe('routing styles', () => {
+  it.each([
+    ['curve', 'C'],
+    ['elbow', 'L'],
+    ['straight', 'L'],
+  ] as const)('paints a %s edge with the matching path command', (kind, command) => {
+    const styled: Edge = { ...edge, id: `e-${kind}`, style: { ...edge.style, kind } }
+    render(<ConnectorLayer edges={[styled]} nodesById={nodesById} />)
+    const path = screen.getByTestId(`edge-e-${kind}`)
+    expect(path.getAttribute('data-edge-style')).toBe(kind)
+    expect(path.getAttribute('d')).toContain(command)
+  })
+})

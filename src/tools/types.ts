@@ -1,5 +1,5 @@
 import type * as Y from 'yjs'
-import type { Node, NodeId, Point, Rect } from '../types'
+import type { EdgeStyleKind, Node, NodeId, Point, Rect } from '../types'
 
 export type Part = 'body' | 'edge' | 'handle' | 'scrubber'
 export type Hit = { nodeId: NodeId; part: Part }
@@ -22,6 +22,8 @@ export type ToolContext = {
   setSelection: (s: Set<NodeId>) => void
   marquee: Rect | null
   setMarquee: (r: Rect | null) => void
+  /** The routing style a newly drawn connector is created with (DoD 3). */
+  edgeStyleKind: EdgeStyleKind
 }
 
 export type Tool = {

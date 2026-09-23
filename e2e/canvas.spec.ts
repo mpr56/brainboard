@@ -65,6 +65,41 @@ test('connects two nodes with an edge', async ({ page }) => {
   await expect(page.locator('[data-edge-id]')).toHaveCount(1)
 })
 
+// DoD 3: all three routing styles must be reachable from the UI. Before the
+// toolbar control, connectTool always created DEFAULT_EDGE_STYLE and only the
+// geometry unit tests ever exercised the other two.
+test('creates a connector with a non-default routing style', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600) // end the edit session and deselect
+  await page.getByTestId('add-text').click()
+
+  const bodies = page.getByTestId('text-node-body')
+  await expect(bodies).toHaveCount(2)
+  await bodies.nth(1).hover()
+  await page.mouse.down()
+  await page.mouse.move(900, 500, { steps: 10 })
+  await page.mouse.up()
+
+  // curve -> elbow -> straight
+  await page.getByTestId('edge-style').click()
+  await page.getByTestId('edge-style').click()
+  await expect(page.getByTestId('edge-style')).toHaveAttribute('data-edge-style', 'straight')
+
+  await page.getByTestId('tool-connect').click()
+  await bodies.nth(0).hover()
+  await page.mouse.down()
+  await bodies.nth(1).hover()
+  await page.mouse.up()
+
+  const path = page.locator('[data-edge-id]')
+  await expect(path).toHaveCount(1)
+  await expect(path).toHaveAttribute('data-edge-style', 'straight')
+  // A straight edge is a single line segment, never a bezier.
+  expect(await path.getAttribute('d')).toMatch(/^M [\d.-]+ [\d.-]+ L [\d.-]+ [\d.-]+$/)
+  // And the stored arrow is actually painted.
+  await expect(path).toHaveAttribute('marker-end', /^url\(#arrow-/)
+})
+
 test('zooms about the viewport centre and reports the level', async ({ page }) => {
   await expect(page.getByTestId('zoom-level')).toHaveText('100%')
   await page.getByTestId('zoom-in').click()

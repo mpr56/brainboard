@@ -30,6 +30,7 @@ function harness() {
     setSelection: (s) => { selection = s },
     get marquee() { return marquee },
     setMarquee: (r) => { marquee = r },
+    edgeStyleKind: 'curve',
   }
   return { doc, a, b, ctx, sel: () => selection, mq: () => marquee }
 }

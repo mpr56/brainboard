@@ -1,3 +1,5 @@
+import type { EdgeStyleKind } from '../types'
+
 type Props = {
   tool: 'select' | 'connect'
   onTool: (t: 'select' | 'connect') => void
@@ -6,6 +8,20 @@ type Props = {
   onRedo: () => void
   zoom: number
   onZoom: (factor: number) => void
+  edgeStyle: EdgeStyleKind
+  onEdgeStyle: (kind: EdgeStyleKind) => void
+}
+
+/** Cycle order for the connector-style control. */
+export const EDGE_STYLE_KINDS: EdgeStyleKind[] = ['curve', 'elbow', 'straight']
+
+export const nextEdgeStyle = (kind: EdgeStyleKind): EdgeStyleKind =>
+  EDGE_STYLE_KINDS[(EDGE_STYLE_KINDS.indexOf(kind) + 1) % EDGE_STYLE_KINDS.length] ?? 'curve'
+
+const LABEL: Record<EdgeStyleKind, string> = {
+  curve: 'Curve',
+  elbow: 'Elbow',
+  straight: 'Straight',
 }
 
 const button = (active: boolean): React.CSSProperties => ({
@@ -18,7 +34,17 @@ const button = (active: boolean): React.CSSProperties => ({
   cursor: 'pointer',
 })
 
-export function Toolbar({ tool, onTool, onAddText, onUndo, onRedo, zoom, onZoom }: Props) {
+export function Toolbar({
+  tool,
+  onTool,
+  onAddText,
+  onUndo,
+  onRedo,
+  zoom,
+  onZoom,
+  edgeStyle,
+  onEdgeStyle,
+}: Props) {
   return (
     <div
       data-testid="toolbar"
@@ -41,6 +67,17 @@ export function Toolbar({ tool, onTool, onAddText, onUndo, onRedo, zoom, onZoom 
       </button>
       <button data-testid="tool-connect" style={button(tool === 'connect')} onClick={() => onTool('connect')}>
         Connect
+      </button>
+      {/* DoD 3: all three routing styles must be reachable, not just the
+          default. One cycle button keeps the toolbar's shape. */}
+      <button
+        data-testid="edge-style"
+        data-edge-style={edgeStyle}
+        title="Connector style"
+        style={button(false)}
+        onClick={() => onEdgeStyle(nextEdgeStyle(edgeStyle))}
+      >
+        {LABEL[edgeStyle]}
       </button>
       <button data-testid="add-text" style={button(false)} onClick={onAddText}>
         + Text

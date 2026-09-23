@@ -54,6 +54,14 @@ export const connectTool: Tool = {
     if (e.hit.nodeId === p.fromNodeId) return
     if (!getNode(ctx.doc, e.hit.nodeId)) return
 
-    addEdge(ctx.doc, { from: anchorFrom(p), to: { nodeId: e.hit.nodeId } }, 'user')
+    addEdge(
+      ctx.doc,
+      {
+        from: anchorFrom(p),
+        to: { nodeId: e.hit.nodeId },
+        style: { kind: ctx.edgeStyleKind },
+      },
+      'user',
+    )
   },
 }
