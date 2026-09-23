@@ -8,7 +8,9 @@ type Pending = { fromNodeId: NodeId; fromLocatorTime: number | null; to: Point }
 let pending: Pending | null = null
 
 export function pendingEdge(): { fromNodeId: NodeId; to: Point } | null {
-  return pending ? { fromNodeId: pending.fromNodeId, to: pending.to } : null
+  // `to` is copied, not shared: a caller writing to `result.to.x` would
+  // otherwise reach straight into this module's gesture state.
+  return pending ? { fromNodeId: pending.fromNodeId, to: { ...pending.to } } : null
 }
 
 export function resetConnectTool(): void {

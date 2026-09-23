@@ -19,6 +19,13 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
       style={{ position: 'absolute', overflow: 'visible', pointerEvents: 'none', left: 0, top: 0 }}
     >
       {edges.map((edge) => {
+        // `document/edges.ts` already filters structurally-invalid rows out of
+        // every read, so this should never fire. It exists because the cost of
+        // being wrong is asymmetric: dereferencing a missing anchor here
+        // throws during render, which unmounts the whole board with no
+        // recovery path, while skipping one unpaintable edge loses one line.
+        if (!edge.from || !edge.to || !edge.style) return null
+
         const from = nodesById.get(edge.from.nodeId)
         const to = nodesById.get(edge.to.nodeId)
         if (!from || !to) return null

@@ -13,6 +13,35 @@ export type EdgeInit = {
   style?: Partial<EdgeStyle>
 }
 
+const isAnchor = (v: unknown): v is Anchor =>
+  typeof v === 'object' && v !== null && typeof (v as Anchor).nodeId === 'string'
+
+/**
+ * Check that a Y.Map carries the structure every reader dereferences. A row
+ * that arrived from IndexedDB (a partially committed write, a future schema
+ * change) can be missing `from` entirely; without this, `toEdge` hands back
+ * `{from: undefined}` and the first `edge.from.nodeId` throws — inside
+ * ConnectorLayer's render, which white-screens the whole board. Spec §9:
+ * corrupt state must surface, not propagate silently. Mirrors `isValidNode`.
+ */
+function isValidEdge(m: Y.Map<unknown>): boolean {
+  const style = m.get('style')
+  return (
+    isAnchor(m.get('from')) &&
+    isAnchor(m.get('to')) &&
+    typeof style === 'object' &&
+    style !== null
+  )
+}
+
+/**
+ * Callers hand us their own objects. Stored by reference, a later mutation of
+ * one would change document state outside any transaction — invisible to
+ * observers and to undo. Clone on the way in.
+ */
+const cloneAnchor = (a: Anchor): Anchor =>
+  a.locator ? { nodeId: a.nodeId, locator: { ...a.locator } } : { nodeId: a.nodeId }
+
 function toEdge(id: EdgeId, m: Y.Map<unknown>): Edge {
   return {
     id,
@@ -27,8 +56,8 @@ export function addEdge(doc: Y.Doc, init: EdgeInit, origin: Origin = 'user'): Ed
   const id = init.id ?? nanoid()
   transact(doc, origin, () => {
     const m = new Y.Map<unknown>()
-    m.set('from', init.from)
-    m.set('to', init.to)
+    m.set('from', cloneAnchor(init.from))
+    m.set('to', cloneAnchor(init.to))
     if (init.label !== undefined) m.set('label', init.label)
     m.set('style', { ...DEFAULT_EDGE_STYLE, ...init.style })
     edgesMap(doc).set(id, m)
@@ -38,12 +67,14 @@ export function addEdge(doc: Y.Doc, init: EdgeInit, origin: Origin = 'user'): Ed
 
 export function getEdge(doc: Y.Doc, id: EdgeId): Edge | null {
   const m = edgesMap(doc).get(id)
-  return m ? toEdge(id, m) : null
+  return m && isValidEdge(m) ? toEdge(id, m) : null
 }
 
 export function listEdges(doc: Y.Doc): Edge[] {
   const out: Edge[] = []
-  edgesMap(doc).forEach((m, id) => out.push(toEdge(id, m)))
+  edgesMap(doc).forEach((m, id) => {
+    if (isValidEdge(m)) out.push(toEdge(id, m))
+  })
   return out
 }
 
@@ -61,7 +92,10 @@ export function updateEdge(
   if (!m) return
   transact(doc, origin, () => {
     for (const [key, value] of Object.entries(patch)) {
-      if (value !== undefined) m.set(key, value)
+      if (value === undefined) continue
+      if (key === 'from' || key === 'to') m.set(key, cloneAnchor(value as Anchor))
+      else if (key === 'style') m.set(key, { ...(value as EdgeStyle) })
+      else m.set(key, value)
     }
   })
 }

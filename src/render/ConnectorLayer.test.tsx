@@ -29,6 +29,20 @@ describe('ConnectorLayer', () => {
     expect(screen.queryByTestId('edge-e2')).toBeNull()
   })
 
+  // A throw here is not one missing line: it happens during render, so React
+  // unmounts the entire board and the user sees a white screen with no way
+  // back. The document layer filters these rows out, and this is the second
+  // line of defence for anything that slips past it.
+  it('skips a malformed edge instead of throwing during render', () => {
+    const broken = { id: 'e4', to: { nodeId: 'b' }, style: edge.style } as unknown as Edge
+    expect(() =>
+      render(<ConnectorLayer edges={[broken, edge]} nodesById={nodesById} />),
+    ).not.toThrow()
+    expect(screen.queryByTestId('edge-e4')).toBeNull()
+    // The healthy edge alongside it still paints.
+    expect(screen.getByTestId('edge-e1')).toBeDefined()
+  })
+
   it('routes a time-locator endpoint onto the scrubber track', () => {
     const timed: Edge = {
       ...edge,

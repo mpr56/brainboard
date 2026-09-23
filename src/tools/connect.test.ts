@@ -59,6 +59,17 @@ describe('connectTool', () => {
     expect(pendingEdge()).toEqual({ fromNodeId: h.a, to: { x: 200, y: 90 } })
   })
 
+  it('returns a copy of the pending endpoint, not the live gesture state', () => {
+    const h = harness()
+    connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+    connectTool.onMove!(ev('move', { x: 200, y: 90 }), h.ctx)
+
+    const snapshot = pendingEdge()!
+    snapshot.to.x = -1
+
+    expect(pendingEdge()).toEqual({ fromNodeId: h.a, to: { x: 200, y: 90 } })
+  })
+
   it('creates nothing when released over empty canvas', () => {
     const h = harness()
     connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
