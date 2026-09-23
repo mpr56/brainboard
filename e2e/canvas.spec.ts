@@ -73,10 +73,50 @@ test('zooms about the viewport centre and reports the level', async ({ page }) =
 
 test('deletes the selected node with the Delete key', async ({ page }) => {
   await page.getByTestId('add-text').click()
+  // "+ Text" drops the new node straight into an edit session. Clicking empty
+  // canvas ends it (and deselects); clicking the node then selects it without
+  // reopening the editor. No Escape: the keyboard must return to command mode
+  // on its own, which is exactly what this test now also proves.
+  await page.mouse.click(600, 600)
   await page.getByTestId('text-node-body').first().click()
-  await page.keyboard.press('Escape')
   await page.keyboard.press('Delete')
   await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+})
+
+// Regression: `editingId` used to be cleared only by Escape, so the very first
+// node created put the board in "typing" mode permanently and the Delete
+// branch was unreachable for the rest of the session.
+test('Delete works after a text edit without pressing Escape', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  const body = page.getByTestId('text-node-body').first()
+  await body.dblclick()
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('typed then abandoned')
+  await page.mouse.click(600, 600) // click away: this alone must end the edit
+  await expect(body).toHaveText('typed then abandoned')
+
+  await body.click() // re-select the node, still with no Escape anywhere
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+})
+
+// Regression: while the edit session never ended, TextNode kept rendering its
+// frozen draft, so the document could be rolled back underneath a view that
+// went on showing the edited text. The first ⌘Z looked like a no-op and the
+// second deleted the node.
+test('one undo after an edit shows the reverted text on screen', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  const body = page.getByTestId('text-node-body').first()
+  await expect(body).toHaveText('New idea')
+
+  await body.dblclick()
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('edited text')
+  await page.mouse.click(600, 600) // blur commits the edit
+  await expect(body).toHaveText('edited text')
+
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(body).toHaveText('New idea')
 })
 
 test('pointercancel clears an in-flight marquee instead of leaving a ghost box', async ({ page }) => {
@@ -127,7 +167,9 @@ test('pointercancel clears an in-flight marquee instead of leaving a ghost box',
   await page.mouse.down()
   await page.mouse.move(nodeBox.x + nodeBox.width + 20, nodeBox.y + nodeBox.height + 20, { steps: 5 })
   await page.mouse.up()
-  await page.keyboard.press('Escape')
+  // No Escape: the marquee's own pointer-down on empty canvas is what ends the
+  // edit session "+ Text" opened, so the keyboard is already back in command
+  // mode by the time Delete arrives.
   await page.keyboard.press('Delete')
   await expect(page.getByTestId('text-node-body')).toHaveCount(0)
 })

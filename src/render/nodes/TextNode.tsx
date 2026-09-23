@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { NodeTypeDef, NodeViewProps } from '../registry'
 
-function TextNodeView({ node, state, onEdit, onMeasure }: NodeViewProps) {
+function TextNodeView({ node, state, onEdit, onMeasure, onEndEdit }: NodeViewProps) {
   const ref = useRef<HTMLDivElement>(null)
   const text = (node.props.text as string) ?? ''
 
@@ -40,8 +40,16 @@ function TextNodeView({ node, state, onEdit, onMeasure }: NodeViewProps) {
       contentEditable={state.editing}
       suppressContentEditableWarning
       onBlur={(e) => {
+        // Commit first, unconditionally: focus can leave after `state.editing`
+        // has already flipped false (a pointer-down elsewhere clears
+        // `editingId` before the browser moves focus), and skipping the commit
+        // in that window would silently discard everything the user typed.
         const next = e.currentTarget.textContent ?? ''
         if (next !== text) onEdit({ props: { ...node.props, text: next } })
+        // Then report that the session is over. The listener upstream only
+        // acts if THIS node is the one being edited, so a stray blur on an
+        // idle node is a no-op.
+        onEndEdit()
       }}
       style={{
         width: '100%',

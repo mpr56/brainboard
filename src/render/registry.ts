@@ -10,6 +10,12 @@ export type NodeViewProps = {
   onEdit: (patch: Partial<Node>) => void
   /** Report measured height so the document stays the source of truth (rule 1). */
   onMeasure: (h: number) => void
+  /**
+   * Signal that this node's edit session has genuinely ended (the view lost
+   * focus). Without it nothing upstream can clear `editingId`, so the node
+   * stays contentEditable forever and the keyboard stays in "typing" mode.
+   */
+  onEndEdit: () => void
 }
 
 export type NodeTypeDef = {

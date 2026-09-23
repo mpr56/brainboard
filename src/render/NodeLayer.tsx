@@ -9,9 +9,18 @@ type Props = {
   onEdit: (id: NodeId, patch: Partial<Node>) => void
   onMeasure: (id: NodeId, h: number) => void
   onStartEdit: (id: NodeId) => void
+  onEndEdit: (id: NodeId) => void
 }
 
-export function NodeLayer({ nodes, selection, editingId, onEdit, onMeasure, onStartEdit }: Props) {
+export function NodeLayer({
+  nodes,
+  selection,
+  editingId,
+  onEdit,
+  onMeasure,
+  onStartEdit,
+  onEndEdit,
+}: Props) {
   // Entering edit mode flips the node's DOM region to contentEditable, but
   // that alone does not move focus there. Without an explicit focus, a
   // double-click starts an edit session the keyboard can't reach. This runs
@@ -56,6 +65,7 @@ export function NodeLayer({ nodes, selection, editingId, onEdit, onMeasure, onSt
               state={{ selected, editing: editingId === node.id }}
               onEdit={(patch) => onEdit(node.id, patch)}
               onMeasure={(h) => onMeasure(node.id, h)}
+              onEndEdit={() => onEndEdit(node.id)}
             />
           </div>
         )

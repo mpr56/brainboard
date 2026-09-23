@@ -82,10 +82,29 @@ export function App() {
         return
       }
       e.currentTarget.setPointerCapture(e.pointerId)
-      tool.onDown?.(toWorldEvent(e, 'down'), ctx)
+      const we = toWorldEvent(e, 'down')
+      // A pointer-down that lands anywhere but the node being edited ends the
+      // session. Blur alone is not enough: focus can already have been lost
+      // (or never taken) while `editingId` is still set, and until it clears
+      // the keyboard stays in "typing" mode and Delete/v/c are dead.
+      // Landing on the edited node itself is caret placement, not an exit.
+      if (editingId !== null && we.hit?.nodeId !== editingId) {
+        // Order matters. Dropping `editingId` first flips the node's
+        // contentEditable off, and the blur the browser then delivers is not
+        // reliably routed back to the view — so the text the user just typed
+        // is never committed. Moving focus out explicitly fires focusout
+        // synchronously, which runs the view's own commit-and-report handler
+        // (that handler is what nulls editingId in the normal path); the
+        // setState below is the fallback for when focus was never in an
+        // editor to begin with.
+        const active = document.activeElement
+        if (active instanceof HTMLElement && active.isContentEditable) active.blur()
+        setEditingId(null)
+      }
+      tool.onDown?.(we, ctx)
       forceRender((n) => n + 1)
     },
-    [ctx, gestures, tool, toWorldEvent],
+    [ctx, editingId, gestures, tool, toWorldEvent],
   )
 
   // Ruling 1: `gestures.movePan` is a per-render prop (deps `[camera, onCamera]`
@@ -240,6 +259,7 @@ export function App() {
           onEdit={(id, patch) => updateNode(doc, id, patch, 'user')}
           onMeasure={(id, h) => updateNode(doc, id, { h }, 'system')}
           onStartEdit={setEditingId}
+          onEndEdit={(id) => setEditingId((current) => (current === id ? null : current))}
         />
       </World>
       <Overlay camera={camera} marquee={marquee} pending={pendingLine} />
