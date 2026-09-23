@@ -78,3 +78,56 @@ test('deletes the selected node with the Delete key', async ({ page }) => {
   await page.keyboard.press('Delete')
   await expect(page.getByTestId('text-node-body')).toHaveCount(0)
 })
+
+test('pointercancel clears an in-flight marquee instead of leaving a ghost box', async ({ page }) => {
+  // Start a marquee drag on empty canvas and leave it in flight (no pointerup).
+  await page.mouse.move(300, 300)
+  await page.mouse.down()
+  await page.mouse.move(500, 450, { steps: 5 })
+  await expect(page.getByTestId('marquee')).toBeVisible()
+
+  // Simulate a touch/gesture interruption (a real device delivers
+  // pointercancel instead of pointerup -- e.g. the browser's own gesture
+  // recognizer taking over a two-finger scroll; per the Pointer Events spec,
+  // no pointerup follows a pointercancel for that same interaction).
+  // Playwright's mouse API has no "cancel" action, so dispatch the real
+  // event directly.
+  await page.evaluate(() => {
+    const viewport = document.querySelector('[data-testid="viewport"]')
+    viewport?.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId: 1 }))
+  })
+
+  // The marquee box must be gone *immediately* on cancel, before any further
+  // pointer event -- real or synthetic. This must be checked before calling
+  // page.mouse.up() below: a real pointerup is what a completed (not
+  // cancelled) drag would send, and selectTool.onUp *also* clears the
+  // marquee via that normal path when marqueeOrigin is still set. Checking
+  // after an up would pass whether or not the pointercancel listener ever
+  // attached, which is exactly the "passes either way" trap to avoid here.
+  // (selectTool.onDown separately resets module-level state defensively on
+  // the *next* pointer-down regardless of this fix, so that alone also
+  // wouldn't distinguish a working handler from one that never attached --
+  // this in-flight, pre-next-gesture check is what actually does.)
+  await expect(page.getByTestId('marquee')).toHaveCount(0)
+
+  // Only now release Playwright's own virtual mouse button, purely so later
+  // actions in this test behave normally. By this point the app has already
+  // cleared marqueeOrigin on the cancel above, so this is a no-op for
+  // gesture state -- selectTool.onUp's `if (marqueeOrigin)` branch sees null
+  // and does nothing.
+  await page.mouse.up()
+
+  // The gesture system should be fully usable again: a fresh marquee-select
+  // and delete on a new node works exactly as normal.
+  await page.getByTestId('add-text').click()
+  await page.waitForTimeout(100)
+  const nodeBox = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!nodeBox) throw new Error('expected node to be visible')
+  await page.mouse.move(nodeBox.x - 20, nodeBox.y - 20)
+  await page.mouse.down()
+  await page.mouse.move(nodeBox.x + nodeBox.width + 20, nodeBox.y + nodeBox.height + 20, { steps: 5 })
+  await page.mouse.up()
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+})

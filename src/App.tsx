@@ -113,20 +113,32 @@ export function App() {
 
   // Ruling 4: a pointercancel (touch interruption, browser gesture takeover)
   // never reaches onUp, so a dangling drag/marquee/connect gesture would
-  // survive in module-level tool state until the next pointer-down. World.tsx
-  // is off-limits to modify (its Props type has no onPointerCancel slot), so
-  // this listens on the DOM directly; pointercancel bubbles from the captured
-  // element up through this root.
+  // survive in module-level tool state until the next pointer-down.
+  // World.tsx is off-limits to modify (its Props type has no
+  // onPointerCancel slot), so this listens on the DOM directly. Attached to
+  // `window`, mirroring the keydown effect below, not to `rootRef.current`:
+  // `rootRef`'s element only exists in the `ready` tree (see the early
+  // `if (!ready) return <div data-testid="loading">…</div>` below, which has
+  // no ref-bearing element), and `ready` starts false and cannot flip true
+  // within the same synchronous render. This effect's deps are `[]`, so it
+  // runs exactly once, at the very first commit — with `ready` still false
+  // and `rootRef.current` still null. A listener attached to that null
+  // would-be element never attaches at all, for the component's whole life.
+  // `window` always exists, so the listener is live from the first commit.
   useEffect(() => {
-    const el = rootRef.current
-    if (!el) return
     const onCancel = () => {
       resetSelectTool()
       resetConnectTool()
+      // Module-level tool state is now clear, but the marquee box is React
+      // state that only the (never-fired) onUp would have cleared, and the
+      // pending-connector line is recomputed from pendingEdge() below on
+      // every render — forceRender alone picks that up once
+      // resetConnectTool() has nulled it out.
+      setMarquee(null)
       forceRender((n) => n + 1)
     }
-    el.addEventListener('pointercancel', onCancel)
-    return () => el.removeEventListener('pointercancel', onCancel)
+    window.addEventListener('pointercancel', onCancel)
+    return () => window.removeEventListener('pointercancel', onCancel)
   }, [])
 
   const onAddText = useCallback(() => {
