@@ -3,7 +3,7 @@ import { createDoc } from '../document/schema'
 import { addNode, getNode, listNodes } from '../document/nodes'
 import { createUndoManager } from '../document/undo'
 import type { Node, NodeId, Point, Rect } from '../types'
-import { normalizeRect, nodesInRect, resetSelectTool, selectTool } from './select'
+import { dragPreview, normalizeRect, nodesInRect, resetSelectTool, selectTool } from './select'
 import type { ToolContext, WorldEvent } from './types'
 
 // Gesture state is module-level, so each case starts from a clean slate.
@@ -107,6 +107,68 @@ describe('selectTool', () => {
     selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
     selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
     expect(spy).not.toHaveBeenCalled()
+  })
+
+  // Spec §7: transient drag state lives in an ephemeral store precisely so it
+  // can be rendered. Before this, nothing could read it and a dragged node sat
+  // still for the whole gesture, then jumped on release.
+  describe('dragPreview', () => {
+    it('is null with no gesture in flight', () => {
+      expect(dragPreview()).toBeNull()
+    })
+
+    it('stays null until the pointer actually moves, so a click paints nothing', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      expect(dragPreview()).toBeNull()
+    })
+
+    it('reports the offset from the gesture origin and follows the pointer', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
+      expect(dragPreview()).toMatchObject({ dx: 50, dy: 30 })
+      selectTool.onMove!(ev('move', { x: 110, y: 70 }), h.ctx)
+      expect(dragPreview()).toMatchObject({ dx: 100, dy: 60 })
+      expect([...dragPreview()!.ids]).toEqual([h.a])
+    })
+
+    it('covers every node in a multi-node drag', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onDown!(
+        ev('down', { x: 310, y: 310 }, {
+          hit: { nodeId: h.b, part: 'body' },
+          modifiers: { ...mods, shift: true },
+        }),
+        h.ctx,
+      )
+      selectTool.onMove!(ev('move', { x: 330, y: 320 }), h.ctx)
+      expect(new Set(dragPreview()!.ids)).toEqual(new Set([h.a, h.b]))
+    })
+
+    // The preview is a paint, not a write. This is the guarantee it must not
+    // cost: one gesture = one transaction = one undo step.
+    it('produces no document writes while it is reporting an offset', () => {
+      const h = harness()
+      const spy = vi.fn()
+      h.doc.on('update', spy)
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 110, y: 70 }), h.ctx)
+      expect(dragPreview()).toMatchObject({ dx: 100, dy: 60 })
+      expect(spy).not.toHaveBeenCalled()
+      expect(getNode(h.doc, h.a)).toMatchObject({ x: 0, y: 0 })
+    })
+
+    it('clears on pointer-up, once the real position is committed', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 60, y: 40 }), h.ctx)
+      selectTool.onUp!(ev('up', { x: 60, y: 40 }), h.ctx)
+      expect(dragPreview()).toBeNull()
+      expect(getNode(h.doc, h.a)).toMatchObject({ x: 50, y: 30 })
+    })
   })
 
   // Regression: an abandoned marquee (no matching onUp — pointercancel, or the

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import type { DragPreview } from '../tools/select'
 import type { Node, NodeId } from '../types'
 import { getNodeType } from './registry'
 
@@ -10,6 +11,12 @@ type Props = {
   onMeasure: (id: NodeId, h: number) => void
   onStartEdit: (id: NodeId) => void
   onEndEdit: (id: NodeId) => void
+  /**
+   * In-flight drag offset, world units. Painted on top of the committed
+   * document position so the dragged nodes follow the pointer without a
+   * single document write mid-gesture.
+   */
+  dragPreview?: DragPreview | null
 }
 
 export function NodeLayer({
@@ -20,6 +27,7 @@ export function NodeLayer({
   onMeasure,
   onStartEdit,
   onEndEdit,
+  dragPreview = null,
 }: Props) {
   // Entering edit mode flips the node's DOM region to contentEditable, but
   // that alone does not move focus there. Without an explicit focus, a
@@ -40,16 +48,21 @@ export function NodeLayer({
       {nodes.map((node) => {
         const { View } = getNodeType(node.type)
         const selected = selection.has(node.id)
+        // The document is untouched during a drag; only this paint moves.
+        const dragging = dragPreview?.ids.has(node.id) ?? false
+        const dx = dragging ? dragPreview!.dx : 0
+        const dy = dragging ? dragPreview!.dy : 0
         return (
           <div
             key={node.id}
             data-node-id={node.id}
             data-part="body"
+            data-dragging={dragging ? 'true' : undefined}
             onDoubleClick={() => onStartEdit(node.id)}
             style={{
               position: 'absolute',
-              left: node.x,
-              top: node.y,
+              left: node.x + dx,
+              top: node.y + dy,
               width: node.w,
               minHeight: node.h,
               zIndex: node.z,

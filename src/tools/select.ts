@@ -21,9 +21,13 @@ export function nodesInRect(nodes: Node[], rect: Rect): NodeId[] {
 
 type DragState = {
   origin: Point
+  current: Point
   start: Map<NodeId, Point>
   moved: boolean
 }
+
+/** The in-flight offset of a drag, in world units, for the view to paint. */
+export type DragPreview = { ids: ReadonlySet<NodeId>; dx: number; dy: number }
 
 // Gesture state deliberately lives outside Yjs: nothing is committed until
 // pointer-up, so one gesture produces exactly one undo step.
@@ -34,6 +38,24 @@ let marqueeOrigin: Point | null = null
 export function resetSelectTool(): void {
   drag = null
   marqueeOrigin = null
+}
+
+/**
+ * Spec §7 puts transient drag state in an ephemeral store *so that it can be
+ * rendered*. This is that store's reader: the offset the dragged nodes should
+ * appear at right now, before anything is committed. Returns null until the
+ * gesture actually moves, so a plain click paints nothing.
+ *
+ * Both values are world units, matching `Node.x/y`, so the view adds them
+ * directly — no zoom math leaves camera.ts (rule 2).
+ */
+export function dragPreview(): DragPreview | null {
+  if (!drag || !drag.moved) return null
+  return {
+    ids: new Set(drag.start.keys()),
+    dx: drag.current.x - drag.origin.x,
+    dy: drag.current.y - drag.origin.y,
+  }
 }
 
 export const selectTool: Tool = {
@@ -61,7 +83,7 @@ export const selectTool: Tool = {
       const node = getNode(ctx.doc, id)
       if (node) start.set(id, { x: node.x, y: node.y })
     }
-    drag = { origin: e.worldPoint, start, moved: false }
+    drag = { origin: e.worldPoint, current: e.worldPoint, start, moved: false }
   },
 
   onMove(e: WorldEvent, ctx: ToolContext) {
@@ -69,7 +91,13 @@ export const selectTool: Tool = {
       ctx.setMarquee(normalizeRect(marqueeOrigin, e.worldPoint))
       return
     }
-    if (drag) drag.moved = true
+    if (drag) {
+      // Ephemeral only — still no document write until onUp (one gesture =
+      // one transaction = one undo step). `current` exists purely so
+      // dragPreview() can report where the nodes should *look* right now.
+      drag.current = e.worldPoint
+      drag.moved = true
+    }
   },
 
   onUp(e: WorldEvent, ctx: ToolContext) {

@@ -13,7 +13,7 @@ import { visibleNodes } from './render/visibleNodes'
 import { useCameraGestures } from './render/useCameraGestures'
 import { connectTool, pendingEdge, resetConnectTool } from './tools/connect'
 import { hitTestDom } from './tools/hitTest'
-import { resetSelectTool, selectTool } from './tools/select'
+import { dragPreview, resetSelectTool, selectTool } from './tools/select'
 import type { Tool, WorldEvent } from './tools/types'
 import { Toolbar } from './ui/Toolbar'
 import type { EdgeStyleKind, Node, NodeId, Point, Rect } from './types'
@@ -195,6 +195,10 @@ export function App() {
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n] as const)), [nodes])
   const shown = useMemo(() => visibleNodes(nodes, camera, viewport), [nodes, camera, viewport])
 
+  // Read fresh on every render, like `pendingEdge()` below: both are ephemeral
+  // tool state that the forceRender after each pointer event republishes.
+  const drag = dragPreview()
+
   const pending = pendingEdge()
   const pendingLine =
     pending && nodesById.has(pending.fromNodeId)
@@ -279,6 +283,7 @@ export function App() {
           onMeasure={(id, h) => updateNode(doc, id, { h }, 'system')}
           onStartEdit={setEditingId}
           onEndEdit={(id) => setEditingId((current) => (current === id ? null : current))}
+          dragPreview={drag}
         />
       </World>
       <Overlay camera={camera} marquee={marquee} pending={pendingLine} />

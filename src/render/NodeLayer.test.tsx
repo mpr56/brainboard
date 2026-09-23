@@ -46,4 +46,59 @@ describe('NodeLayer', () => {
     fireEvent.focusOut(screen.getByText('first'))
     expect(onEndEdit).toHaveBeenCalledWith('n1')
   })
+
+  // Spec §7: the ephemeral drag store exists so the gesture can be *seen*.
+  // Without this the node sat at its committed position for the whole drag
+  // and jumped only on release.
+  describe('drag preview', () => {
+    const box = (id: string) => document.querySelector<HTMLElement>(`[data-node-id="${id}"]`)!
+
+    it('paints the in-flight offset on the dragged node only', () => {
+      layer({
+        editingId: null,
+        dragPreview: { ids: new Set(['n1']), dx: 40, dy: -15 },
+      })
+      // node() places both at x:0 y:0.
+      expect(box('n1').style.left).toBe('40px')
+      expect(box('n1').style.top).toBe('-15px')
+      expect(box('n2').style.left).toBe('0px')
+      expect(box('n2').style.top).toBe('0px')
+    })
+
+    it('follows the pointer as the offset grows', () => {
+      const { rerender } = render(
+        <NodeLayer
+          nodes={[node('n1', 'first')]}
+          selection={new Set()}
+          editingId={null}
+          onEdit={vi.fn()}
+          onMeasure={vi.fn()}
+          onStartEdit={vi.fn()}
+          onEndEdit={vi.fn()}
+          dragPreview={{ ids: new Set(['n1']), dx: 10, dy: 10 }}
+        />,
+      )
+      expect(box('n1').style.left).toBe('10px')
+      rerender(
+        <NodeLayer
+          nodes={[node('n1', 'first')]}
+          selection={new Set()}
+          editingId={null}
+          onEdit={vi.fn()}
+          onMeasure={vi.fn()}
+          onStartEdit={vi.fn()}
+          onEndEdit={vi.fn()}
+          dragPreview={{ ids: new Set(['n1']), dx: 90, dy: 55 }}
+        />,
+      )
+      expect(box('n1').style.left).toBe('90px')
+      expect(box('n1').style.top).toBe('55px')
+    })
+
+    it('paints committed positions when no drag is in flight', () => {
+      layer({ editingId: null, dragPreview: null })
+      expect(box('n1').style.left).toBe('0px')
+      expect(box('n1').style.top).toBe('0px')
+    })
+  })
 })
