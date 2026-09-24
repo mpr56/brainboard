@@ -171,6 +171,47 @@ describe('selectTool', () => {
     })
   })
 
+  // A click is rarely perfectly still. Without a threshold, a press that
+  // wobbles by a pixel commits an update and pushes an undo step, so the next
+  // ⌘Z undoes a move the user never made instead of their last real edit.
+  describe('movement threshold', () => {
+    it('treats a click with a pixel of jitter as a click, not a drag', () => {
+      const h = harness()
+      const undo = createUndoManager(h.doc)
+      const spy = vi.fn()
+      h.doc.on('update', spy)
+
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 11, y: 10 }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 11, y: 11 }), h.ctx)
+      expect(dragPreview()).toBeNull()
+      selectTool.onUp!(ev('up', { x: 11, y: 11 }), h.ctx)
+
+      expect(spy).not.toHaveBeenCalled()
+      expect(getNode(h.doc, h.a)).toMatchObject({ x: 0, y: 0 })
+      expect(undo.canUndo()).toBe(false)
+      // The click still selected, which is the whole point of not treating it
+      // as a drag.
+      expect([...h.sel()]).toEqual([h.a])
+    })
+
+    it('still commits a deliberate move that clears the threshold', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 14, y: 10 }), h.ctx)
+      selectTool.onUp!(ev('up', { x: 14, y: 10 }), h.ctx)
+      expect(getNode(h.doc, h.a)).toMatchObject({ x: 4, y: 0 })
+    })
+
+    it('stays a drag once the threshold is passed, even back at the origin', () => {
+      const h = harness()
+      selectTool.onDown!(ev('down', { x: 10, y: 10 }, { hit: { nodeId: h.a, part: 'body' } }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 60, y: 60 }), h.ctx)
+      selectTool.onMove!(ev('move', { x: 10, y: 10 }), h.ctx)
+      expect(dragPreview()).toMatchObject({ dx: 0, dy: 0 })
+    })
+  })
+
   // Regression: an abandoned marquee (no matching onUp — pointercancel, or the
   // pointer leaves the window) must not hijack the next gesture. Without the
   // fix, the stale `marqueeOrigin` from this abandoned gesture keeps winning

@@ -37,7 +37,6 @@ export function App() {
   const [, forceRender] = useState(0)
 
   const gestures = useCameraGestures(camera, setCamera)
-  const rootRef = useRef<HTMLDivElement>(null)
   // True between a pointer-down and its matching up/cancel. onPointerMove is a
   // viewport prop, so it also fires on bare hover with nothing in flight; this
   // is what lets those events be dropped before they cost anything.
@@ -160,18 +159,14 @@ export function App() {
 
   // Ruling 4: a pointercancel (touch interruption, browser gesture takeover)
   // never reaches onUp, so a dangling drag/marquee/connect gesture would
-  // survive in module-level tool state until the next pointer-down.
-  // World.tsx is off-limits to modify (its Props type has no
-  // onPointerCancel slot), so this listens on the DOM directly. Attached to
-  // `window`, mirroring the keydown effect below, not to `rootRef.current`:
-  // `rootRef`'s element only exists in the `ready` tree (see the early
-  // `if (!ready) return <div data-testid="loading">…</div>` below, which has
-  // no ref-bearing element), and `ready` starts false and cannot flip true
-  // within the same synchronous render. This effect's deps are `[]`, so it
-  // runs exactly once, at the very first commit — with `ready` still false
-  // and `rootRef.current` still null. A listener attached to that null
-  // would-be element never attaches at all, for the component's whole life.
-  // `window` always exists, so the listener is live from the first commit.
+  // survive in module-level tool state until the next pointer-down. World's
+  // Props type has no onPointerCancel slot, so this listens on the DOM
+  // directly — on `window`, mirroring the keydown effect below, rather than
+  // on a ref to this component's own root. That root only exists in the
+  // `ready` tree (the early `if (!ready) return …` below has no ref-bearing
+  // element), `ready` starts false, and this effect runs once at the first
+  // commit, so such a ref would still be null and the listener would never
+  // attach at all, for the component's whole life. `window` always exists.
   // `endPan` is pulled out of `gestures` because it alone is referentially
   // stable (its own useCallback has empty deps and it writes only to a ref),
   // so it can be an honest dependency here without re-attaching the listener
@@ -282,7 +277,7 @@ export function App() {
   if (!ready) return <div data-testid="loading">Loading board…</div>
 
   return (
-    <div ref={rootRef} style={{ position: 'fixed', inset: 0 }}>
+    <div style={{ position: 'fixed', inset: 0 }}>
       <Toolbar
         tool={toolName}
         onTool={setToolName}
