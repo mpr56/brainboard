@@ -35,4 +35,57 @@ describe('hitTestDom', () => {
     const host = build('<div data-node-id="n4"><span id="i">x</span></div>')
     expect(hitTestDom(host.querySelector('#i'))).toEqual({ nodeId: 'n4', part: 'body' })
   })
+
+  // A spawn handle has to say which side of the node it is on: that direction
+  // is the whole difference between the four handles, and it decides where the
+  // child node a click on it creates ends up.
+  describe('handle direction', () => {
+    const handle = (dir: string) =>
+      build(
+        `<div data-node-id="n5" data-part="body">` +
+          `<div data-part="handle" data-dir="${dir}" id="h"></div>` +
+          `</div>`,
+      ).querySelector('#h')
+
+    it.each(['n', 'e', 's', 'w'])('reports the %s handle direction', (dir) => {
+      expect(hitTestDom(handle(dir))).toEqual({ nodeId: 'n5', part: 'handle', dir })
+    })
+
+    it('reads the direction off an inner element of the handle', () => {
+      const host = build(
+        '<div data-node-id="n6" data-part="body">' +
+          '<div data-part="handle" data-dir="w"><span id="glyph">+</span></div>' +
+          '</div>',
+      )
+      expect(hitTestDom(host.querySelector('#glyph'))).toEqual({
+        nodeId: 'n6',
+        part: 'handle',
+        dir: 'w',
+      })
+    })
+
+    // Anything that is not one of the four sides is not a direction. Passing a
+    // junk string through would reach spawnCentre's switch, which has no
+    // default arm, and silently return undefined as a Point.
+    it('ignores an unrecognised direction', () => {
+      const host = build(
+        '<div data-node-id="n7" data-part="body">' +
+          '<div data-part="handle" data-dir="sideways" id="h"></div>' +
+          '</div>',
+      )
+      expect(hitTestDom(host.querySelector('#h'))).toEqual({ nodeId: 'n7', part: 'handle' })
+    })
+
+    // The direction belongs to the part that was hit. A handle nested under
+    // some other annotated element must not pick up a stray data-dir from an
+    // ancestor that has nothing to do with it.
+    it('does not inherit a direction from an ancestor above the hit part', () => {
+      const host = build(
+        '<div data-node-id="n8" data-dir="e">' +
+          '<div data-part="scrubber" id="s"></div>' +
+          '</div>',
+      )
+      expect(hitTestDom(host.querySelector('#s'))).toEqual({ nodeId: 'n8', part: 'scrubber' })
+    })
+  })
 })

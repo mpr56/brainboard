@@ -1,8 +1,14 @@
 import type * as Y from 'yjs'
-import type { EdgeStyleKind, Node, NodeId, Point, Rect } from '../types'
+import type { Anchor, Dir, EdgeStyleKind, Node, NodeId, Point, Rect } from '../types'
 
 export type Part = 'body' | 'edge' | 'handle' | 'scrubber'
-export type Hit = { nodeId: NodeId; part: Part }
+
+/**
+ * `dir` is set only for parts that have a side — today that means spawn
+ * handles. It is what tells a click on a handle which way to put the node it
+ * creates.
+ */
+export type Hit = { nodeId: NodeId; part: Part; dir?: Dir }
 
 export type Modifiers = { shift: boolean; meta: boolean; alt: boolean; space: boolean }
 
