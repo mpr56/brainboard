@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { screenToWorld, zoomAt, type Camera } from './camera'
-import { addNode, removeNode, updateNode } from './document/nodes'
+import { createNodeAt } from './document/create'
+import { removeNode, updateNode } from './document/nodes'
 import { transact } from './document/schema'
 import { useEdges, useNodes } from './document/hooks'
 import { useBoard } from './useBoard'
@@ -18,7 +19,7 @@ import { hitTestDom } from './tools/hitTest'
 import { dragPreview, resetSelectTool, selectTool } from './tools/select'
 import type { Tool, WorldEvent } from './tools/types'
 import { Toolbar } from './ui/Toolbar'
-import type { EdgeStyleKind, Node, NodeId, Point, Rect } from './types'
+import type { Anchor, EdgeStyleKind, NodeId, Point, Rect } from './types'
 
 const BOARD_ID = 'default'
 
@@ -44,9 +45,40 @@ export function App() {
 
   const tool: Tool = toolName === 'select' ? selectTool : connectTool
 
+  // Read once: every text node is created at the type's default size, and the
+  // registry entry does not change for the life of the app.
+  const newNodeSize = useMemo(() => getNodeType('text').defaultSize(), [])
+
+  /**
+   * The one place a node comes into being, whatever asked for it — the toolbar
+   * button, a double-click on empty canvas, or a spawn handle. Keeping the
+   * policy here rather than in each caller is what makes "a new node is
+   * selected and ready to type into" true of all three without being written
+   * three times.
+   */
+  const createNode = useCallback(
+    (at: Point, from?: Anchor): NodeId => {
+      const id = createNodeAt(doc, at, { size: newNodeSize, from, edgeStyleKind }, 'user')
+      setSelection(new Set([id]))
+      setEditingId(id)
+      return id
+    },
+    [doc, edgeStyleKind, newNodeSize],
+  )
+
   const ctx = useMemo(
-    () => ({ doc, nodes, selection, setSelection, marquee, setMarquee, edgeStyleKind }),
-    [doc, nodes, selection, marquee, edgeStyleKind],
+    () => ({
+      doc,
+      nodes,
+      selection,
+      setSelection,
+      marquee,
+      setMarquee,
+      edgeStyleKind,
+      newNodeSize,
+      createNode,
+    }),
+    [doc, nodes, selection, marquee, edgeStyleKind, newNodeSize, createNode],
   )
 
   // Ruling 2: World's mount effect keys its ResizeObserver lifecycle off
@@ -194,19 +226,8 @@ export function App() {
   }, [endPan])
 
   const onAddText = useCallback(() => {
-    const { w, h } = getNodeType('text').defaultSize()
-    const centre = screenToWorld({ x: viewport.w / 2, y: viewport.h / 2 }, camera)
-    const id = addNode(doc, {
-      type: 'text',
-      x: centre.x - w / 2,
-      y: centre.y - h / 2,
-      w,
-      h,
-      props: { text: 'New idea' },
-    })
-    setSelection(new Set([id]))
-    setEditingId(id)
-  }, [camera, doc, viewport])
+    createNode(screenToWorld({ x: viewport.w / 2, y: viewport.h / 2 }, camera))
+  }, [camera, createNode, viewport])
 
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n] as const)), [nodes])
   const shown = useMemo(() => visibleNodes(nodes, camera, viewport), [nodes, camera, viewport])

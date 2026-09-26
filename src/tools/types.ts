@@ -30,6 +30,21 @@ export type ToolContext = {
   setMarquee: (r: Rect | null) => void
   /** The routing style a newly drawn connector is created with (DoD 3). */
   edgeStyleKind: EdgeStyleKind
+  /**
+   * Size a new node will be given, so a tool can work out where to put one
+   * without reaching into the node-type registry. Tools stay free of `render/`
+   * the same way rule 3 keeps them free of the DOM.
+   */
+  newNodeSize: { w: number; h: number }
+  /**
+   * Creates a text node centred on `at`, optionally linked from `from`, as one
+   * undo step, and hands it to the user ready to type into.
+   *
+   * Supplied by the composition root rather than called directly so that node
+   * *creation policy* — what gets selected, what opens for editing — stays in
+   * one place instead of being duplicated across every tool that can make one.
+   */
+  createNode: (at: Point, from?: Anchor) => NodeId
 }
 
 export type Tool = {

@@ -2,6 +2,7 @@ import type { Node, NodeId, Point, Rect } from '../types'
 import { getNode, updateNode } from '../document/nodes'
 import { transact } from '../document/schema'
 import { rectsIntersect } from '../camera'
+import { pastDragThreshold } from './gesture'
 import type { Tool, ToolContext, WorldEvent } from './types'
 
 export function normalizeRect(a: Point, b: Point): Rect {
@@ -18,18 +19,6 @@ export function nodesInRect(nodes: Node[], rect: Rect): NodeId[] {
     .filter((n) => rectsIntersect(rect, { x: n.x, y: n.y, w: n.w, h: n.h }))
     .map((n) => n.id)
 }
-
-/**
- * Screen pixels of travel before a press counts as a drag rather than a click.
- * Below this, a mouse that jitters by a pixel while the button is down would
- * commit a document update and push an undo step for a move nobody made.
- *
- * Measured in screen space on purpose: hand jitter is a screen-space effect,
- * and a fixed world-space threshold would be invisible when zoomed out and
- * hypersensitive when zoomed in. Comparing two screenPoints costs no
- * conversion, so rule 2 is untouched.
- */
-const DRAG_THRESHOLD_PX = 3
 
 type DragState = {
   origin: Point
@@ -115,13 +104,9 @@ export const selectTool: Tool = {
       // one transaction = one undo step). `current` exists purely so
       // dragPreview() can report where the nodes should *look* right now.
       drag.current = e.worldPoint
-      if (!drag.moved) {
-        const dx = e.screenPoint.x - drag.screenOrigin.x
-        const dy = e.screenPoint.y - drag.screenOrigin.y
-        // Once past the threshold the gesture stays a drag, even if the
-        // pointer wanders back to where it started.
-        if (Math.hypot(dx, dy) >= DRAG_THRESHOLD_PX) drag.moved = true
-      }
+      // Once past the threshold the gesture stays a drag, even if the pointer
+      // wanders back to where it started.
+      if (!drag.moved && pastDragThreshold(drag.screenOrigin, e.screenPoint)) drag.moved = true
     }
   },
 

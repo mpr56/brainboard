@@ -31,6 +31,12 @@ function harness() {
     get marquee() { return marquee },
     setMarquee: (r) => { marquee = r },
     edgeStyleKind: 'curve',
+    newNodeSize: { w: 200, h: 80 },
+    // selectTool never creates nodes. A throwing stub turns any future call
+    // into a visible failure rather than a silently extra row in the document.
+    createNode: () => {
+      throw new Error('selectTool must not create nodes')
+    },
   }
   return { doc, a, b, ctx, sel: () => selection, mq: () => marquee }
 }
