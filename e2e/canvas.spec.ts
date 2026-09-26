@@ -98,10 +98,33 @@ test('undo removes a created node and redo restores it', async ({ page }) => {
   await expect(page.getByTestId('text-node-body')).toHaveCount(1)
 })
 
-test('connects two nodes with an edge', async ({ page }) => {
+/**
+ * Drags from a node's spawn handle to a point, or onto another element.
+ *
+ * The handle only exists to the pointer once its node is hovered
+ * (pointer-events is none until then), so the hover is part of the gesture
+ * rather than setup noise.
+ */
+async function dragFromHandle(
+  page: Page,
+  nodeIndex: number,
+  dir: 'n' | 'e' | 's' | 'w',
+  to: { x: number; y: number },
+) {
+  const body = page.getByTestId('text-node-body').nth(nodeIndex)
+  await body.hover()
+  const handle = page.locator(`[data-part="handle"][data-dir="${dir}"]`).nth(nodeIndex)
+  await handle.hover()
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 10 })
+  await page.mouse.up()
+}
+
+test('connects two nodes by dragging one node`s handle onto the other', async ({ page }) => {
   await page.getByTestId('add-text').click()
-  await page.mouse.click(600, 600) // deselect
+  await page.mouse.click(600, 600) // end the edit session and deselect
   await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
 
   // Separate the two nodes so they are distinguishable.
   const bodies = page.getByTestId('text-node-body')
@@ -111,13 +134,202 @@ test('connects two nodes with an edge', async ({ page }) => {
   await page.mouse.move(900, 500, { steps: 10 })
   await page.mouse.up()
 
-  await page.getByTestId('tool-connect').click()
-  await bodies.nth(0).hover()
-  await page.mouse.down()
-  await bodies.nth(1).hover()
-  await page.mouse.up()
+  const target = await bodies.nth(1).boundingBox()
+  if (!target) throw new Error('expected the second node to be visible')
+  await dragFromHandle(page, 0, 'e', {
+    x: target.x + target.width / 2,
+    y: target.y + target.height / 2,
+  })
 
   await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+  // No new node: the drag landed on something, so it linked rather than created.
+  await expect(bodies).toHaveCount(2)
+})
+
+// The whole point of the handle: a connection no longer requires having made
+// the other node first, and no trip to the toolbar.
+test('dragging a handle onto empty canvas creates the node and links it', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+
+  await dragFromHandle(page, 0, 'e', { x: 900, y: 520 })
+
+  await expect(page.getByTestId('text-node-body')).toHaveCount(2)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+
+  // Node and edge arrived together, so they must leave together.
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(0)
+})
+
+test('clicking a handle spawns a linked child on that side', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const bodies = page.getByTestId('text-node-body')
+  const parent = await bodies.first().boundingBox()
+  if (!parent) throw new Error('expected the node to be visible')
+
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="e"]').first().click()
+
+  await expect(bodies).toHaveCount(2)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+
+  // "East" has to mean east on screen, not merely somewhere else.
+  const child = await bodies.nth(1).boundingBox()
+  if (!child) throw new Error('expected the child to be visible')
+  expect(child.x).toBeGreaterThan(parent.x + parent.width)
+  // And on the parent's axis, not drifting off vertically.
+  expect(Math.abs(child.y + child.height / 2 - (parent.y + parent.height / 2))).toBeLessThan(4)
+})
+
+test('a handle click spawns on the side the handle is on', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const bodies = page.getByTestId('text-node-body')
+  const parent = await bodies.first().boundingBox()
+  if (!parent) throw new Error('expected the node to be visible')
+
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="s"]').first().click()
+
+  const child = await bodies.nth(1).boundingBox()
+  if (!child) throw new Error('expected the child to be visible')
+  expect(child.y).toBeGreaterThan(parent.y + parent.height)
+  expect(Math.abs(child.x + child.width / 2 - (parent.x + parent.width / 2))).toBeLessThan(4)
+})
+
+// pointer-events must stay off until the node is hovered. If it does not, the
+// four handles ring every node with a dead zone that swallows marquee drags
+// and clicks aimed at the canvas.
+test('handles do not block the canvas when their node is not hovered', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+
+  // Press just outside the node's left border — exactly where the west handle
+  // sits — with the pointer arriving from far away, so the node is not hovered.
+  await page.mouse.move(900, 700)
+  await page.mouse.down()
+  await page.mouse.move(box.x - 14, box.y + box.height / 2, { steps: 2 })
+  // A marquee, not a connector drag: the press landed on canvas, not a handle.
+  await expect(page.getByTestId('marquee')).toBeVisible()
+  await page.mouse.up()
+
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(0)
+})
+
+test('double-clicking empty canvas creates a node ready to type into', async ({ page }) => {
+  await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+
+  await page.mouse.dblclick(640, 420)
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+
+  // Created *where it was clicked*, not at the viewport centre like "+ Text".
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+  expect(Math.abs(box.x + box.width / 2 - 640)).toBeLessThan(6)
+  expect(Math.abs(box.y + box.height / 2 - 420)).toBeLessThan(6)
+
+  // It opens for editing, so typing goes straight in with no second gesture.
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('typed on creation')
+  await page.mouse.click(200, 700)
+  await expect(page.getByTestId('text-node-body').first()).toHaveText('typed on creation')
+})
+
+test('double-clicking a node still edits it rather than creating another', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const body = page.getByTestId('text-node-body').first()
+  await body.dblclick()
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('edited not duplicated')
+  await page.mouse.click(200, 700)
+  await expect(body).toHaveText('edited not duplicated')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+})
+
+// Regression: the arrow marker was painted at the node centre, underneath the
+// node's own opaque div, so no connector has ever visibly pointed anywhere.
+test('a connector`s arrowhead lands outside the node box where it can be seen', async ({
+  page,
+}) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+  await dragFromHandle(page, 0, 'e', { x: 1000, y: 300 })
+
+  const edge = page.locator('[data-edge-id]')
+  await expect(edge).toHaveCount(1)
+  await expect(edge).toHaveAttribute('marker-end', /^url\(#arrow-/)
+
+  const target = await page.getByTestId('text-node-body').nth(1).boundingBox()
+  const svgBox = await edge.boundingBox()
+  if (!target || !svgBox) throw new Error('expected both the node and the edge to be visible')
+
+  // The painted path must reach the target's border rather than stopping at —
+  // or running under — its centre, which is where it used to end. The arrow
+  // marker's tip sits a pixel or two past the path's own end by design, so the
+  // claim is "at the border", not "strictly short of it".
+  const end = svgBox.x + svgBox.width
+  expect(end).toBeGreaterThan(target.x - 12)
+  expect(end).toBeLessThan(target.x + 12)
+  // Unambiguously clear of the centre, which is the defect this guards.
+  expect(end).toBeLessThan(target.x + target.width / 2)
+})
+
+// Two clicks on a handle are two children. The guard that stops them also
+// opening the parent for editing lives in App's central double-click handler,
+// so this is the only place it is exercised.
+test('double-clicking a handle spawns children without editing the parent', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const bodies = page.getByTestId('text-node-body')
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="e"]').first().dblclick()
+
+  await expect(bodies).toHaveCount(3)
+
+  // The parent must not be in an edit session: typing would otherwise replace
+  // its text. Delete proves the keyboard is in command mode, not typing mode.
+  await expect(bodies.first()).toHaveAttribute('contenteditable', 'false')
+})
+
+// The document stores a node's size, and a view reports its real laid-out
+// height back so the document stays the source of truth. A node is created at
+// an *estimated* height before anything is laid out, and if that estimate is
+// wrong the correction changes `h` without changing `y` — so the node settles
+// off-centre from where it was asked to appear, and a spawned child misses its
+// parent's axis by half the error. This pins the estimate to the measurement:
+// change the font or padding without changing defaultSize and it fails here.
+test('a new node`s estimated height matches the height it actually lays out to', async ({
+  page,
+}) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const measured = await page.evaluate(() => {
+    const inner = document.querySelector<HTMLElement>('[data-testid="text-node-body"]')!
+    const wrapper = inner.closest('[data-node-id]') as HTMLElement
+    return {
+      scrollHeight: inner.scrollHeight,
+      // What the document settled on, via the wrapper's minHeight.
+      stored: parseFloat(wrapper.style.minHeight),
+    }
+  })
+
+  expect(measured.stored).toBe(measured.scrollHeight)
 })
 
 // DoD 3: all three routing styles must be reachable from the UI. Before the
@@ -140,11 +352,12 @@ test('creates a connector with a non-default routing style', async ({ page }) =>
   await page.getByTestId('edge-style').click()
   await expect(page.getByTestId('edge-style')).toHaveAttribute('data-edge-style', 'straight')
 
-  await page.getByTestId('tool-connect').click()
-  await bodies.nth(0).hover()
-  await page.mouse.down()
-  await bodies.nth(1).hover()
-  await page.mouse.up()
+  const target = await bodies.nth(1).boundingBox()
+  if (!target) throw new Error('expected the second node to be visible')
+  await dragFromHandle(page, 0, 'e', {
+    x: target.x + target.width / 2,
+    y: target.y + target.height / 2,
+  })
 
   const path = page.locator('[data-edge-id]')
   await expect(path).toHaveCount(1)

@@ -100,7 +100,13 @@ describe('TextNode', () => {
 
   it('declares itself dom-only false and provides a default size', () => {
     expect(TEXT_NODE_TYPE.domOnly).toBe(false)
-    expect(TEXT_NODE_TYPE.defaultSize()).toEqual({ w: 220, h: 72 })
+    // The height is one laid-out line: 10px padding top and bottom plus a
+    // 21px line box (15px at 1.4). It is not a roomier round number on
+    // purpose — measurement corrects a node's `h` but never its `y`, so an
+    // over-estimate leaves every new node sitting above the point it was
+    // created at and every spawned child off its parent's axis. An e2e test
+    // pins this to the height the browser actually lays out.
+    expect(TEXT_NODE_TYPE.defaultSize()).toEqual({ w: 220, h: 41 })
   })
 
   it('does not clobber an in-progress edit when text changes while still editing', () => {

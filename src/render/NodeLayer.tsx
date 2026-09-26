@@ -87,7 +87,6 @@ type Props = {
   editingId: NodeId | null
   onEdit: (id: NodeId, patch: Partial<Node>) => void
   onMeasure: (id: NodeId, h: number) => void
-  onStartEdit: (id: NodeId) => void
   onEndEdit: (id: NodeId) => void
   /**
    * In-flight drag offset, world units. Painted on top of the committed
@@ -103,7 +102,6 @@ export function NodeLayer({
   editingId,
   onEdit,
   onMeasure,
-  onStartEdit,
   onEndEdit,
   dragPreview = null,
 }: Props) {
@@ -137,13 +135,11 @@ export function NodeLayer({
             data-node-id={node.id}
             data-part="body"
             data-dragging={dragging ? 'true' : undefined}
-            onDoubleClick={(e) => {
-              // A double-click on a handle is two spawns, not a request to edit
-              // the parent. Without this it would also drop the parent into an
-              // edit session behind the two new nodes.
-              if ((e.target as Element).closest('[data-part="handle"]')) return
-              onStartEdit(node.id)
-            }}
+            // No onDoubleClick here. The viewport captures the pointer on
+            // pointer-down, and per the Pointer Events spec that retargets
+            // `click`/`dblclick` to the capturing element — a handler bound
+            // here would never fire. App interprets double-clicks centrally
+            // and routes them by hit test.
             style={{
               position: 'absolute',
               left: node.x + dx,

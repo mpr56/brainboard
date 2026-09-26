@@ -22,7 +22,6 @@ const layer = (over: Partial<React.ComponentProps<typeof NodeLayer>> = {}) => {
     editingId: 'n1',
     onEdit: vi.fn(),
     onMeasure: vi.fn(),
-    onStartEdit: vi.fn(),
     onEndEdit: vi.fn(),
     ...over,
   }
@@ -31,14 +30,21 @@ const layer = (over: Partial<React.ComponentProps<typeof NodeLayer>> = {}) => {
 }
 
 describe('NodeLayer', () => {
-  it('starts an edit session on double click', () => {
-    const onStartEdit = vi.fn()
-    layer({ editingId: null, onStartEdit })
-    fireEvent.doubleClick(screen.getByText('second'))
-    expect(onStartEdit).toHaveBeenCalledWith('n2')
+  // Double-click is deliberately NOT handled here. The viewport captures the
+  // pointer on pointer-down, and per the Pointer Events spec that retargets
+  // `click` and `dblclick` to the capturing element, so a handler bound to a
+  // node div never runs in the real app. One used to be bound here anyway and
+  // was dead the whole time — jsdom has no pointer capture, so the unit test
+  // asserting it passed happily while double-clicking an idle node did nothing
+  // on screen. App interprets double-clicks centrally instead; the e2e suite
+  // covers it, where pointer capture is real.
+  it('binds no double-click handler of its own', () => {
+    layer({ editingId: null })
+    const wrapper = document.querySelector('[data-node-id="n2"]')!
+    expect(wrapper.getAttribute('ondblclick')).toBeNull()
   })
 
-  // The counterpart to onStartEdit. Without it App can never clear editingId,
+  // The counterpart to the edit session starting. Without it App can never clear editingId,
   // so the board stays in "typing" mode from the first node created onward.
   it('reports the end of an edit session with the node id that ended it', () => {
     const onEndEdit = vi.fn()
@@ -116,21 +122,6 @@ describe('NodeLayer', () => {
       expect(css).toMatch(/\[data-dragging="true"\]\s*>\s*\[data-part="handle"\][^}]*opacity:\s*0/)
     })
 
-    // Two clicks on a handle are two spawns. Letting the dblclick bubble would
-    // additionally drop the *parent* into an edit session behind them.
-    it('does not start an edit session when a handle is double-clicked', () => {
-      const onStartEdit = vi.fn()
-      layer({ editingId: null, onStartEdit })
-      fireEvent.doubleClick(handles('n1').find((el) => el.dataset.dir === 'e')!)
-      expect(onStartEdit).not.toHaveBeenCalled()
-    })
-
-    it('still starts an edit session when the node body is double-clicked', () => {
-      const onStartEdit = vi.fn()
-      layer({ editingId: null, onStartEdit })
-      fireEvent.doubleClick(screen.getByText('first'))
-      expect(onStartEdit).toHaveBeenCalledWith('n1')
-    })
   })
 
   // Spec §7: the ephemeral drag store exists so the gesture can be *seen*.
@@ -159,7 +150,6 @@ describe('NodeLayer', () => {
           editingId={null}
           onEdit={vi.fn()}
           onMeasure={vi.fn()}
-          onStartEdit={vi.fn()}
           onEndEdit={vi.fn()}
           dragPreview={{ ids: new Set(['n1']), dx: 10, dy: 10 }}
         />,
@@ -172,7 +162,6 @@ describe('NodeLayer', () => {
           editingId={null}
           onEdit={vi.fn()}
           onMeasure={vi.fn()}
-          onStartEdit={vi.fn()}
           onEndEdit={vi.fn()}
           dragPreview={{ ids: new Set(['n1']), dx: 90, dy: 55 }}
         />,

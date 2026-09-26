@@ -175,18 +175,36 @@ export function App() {
   )
 
   /**
-   * Double-clicking empty canvas makes a node there. On a node it does not:
-   * NodeLayer's own handler starts an edit session, and this fires too because
-   * that event bubbles up to the viewport, so the hit test is what tells the
-   * two apart.
+   * Every double-click on the board is interpreted here: on a node it opens an
+   * edit session, on empty canvas it creates one.
+   *
+   * It has to live at the viewport and route by hit test, because a handler on
+   * the node itself would never run. `onPointerDown` calls setPointerCapture
+   * on the viewport, and per the Pointer Events spec that retargets the
+   * compatibility mouse events too — `click` and `dblclick` are dispatched at
+   * the capturing element, not at whatever is under the cursor. A `dblclick`
+   * bound to a node div is therefore dead code, which is how this went
+   * unnoticed: the tests that double-clicked a node were always double-clicking
+   * one that "+ Text" had already put into edit mode, so an inert handler and a
+   * working one looked identical.
+   *
+   * elementFromPoint reads the real DOM at the cursor and is immune to the same
+   * retargeting, which is why the hit test here is trustworthy when e.target is
+   * not.
    */
   const onDoubleClick = useCallback(
     (e: React.MouseEvent) => {
-      if (hitTestDom(document.elementFromPoint(e.clientX, e.clientY))) return
+      const hit = hitTestDom(document.elementFromPoint(e.clientX, e.clientY))
+      if (hit) {
+        // Two clicks on a spawn handle are two child nodes. Opening the parent
+        // for editing behind them is not what was asked for.
+        if (hit.part === 'handle') return
+        setSelection(new Set([hit.nodeId]))
+        setEditingId(hit.nodeId)
+        return
+      }
       const rect = e.currentTarget.getBoundingClientRect()
-      createNode(
-        screenToWorld({ x: e.clientX - rect.left, y: e.clientY - rect.top }, camera),
-      )
+      createNode(screenToWorld({ x: e.clientX - rect.left, y: e.clientY - rect.top }, camera))
     },
     [camera, createNode],
   )
@@ -368,7 +386,6 @@ export function App() {
           editingId={editingId}
           onEdit={(id, patch) => updateNode(doc, id, patch, 'user')}
           onMeasure={(id, h) => updateNode(doc, id, { h }, 'system')}
-          onStartEdit={setEditingId}
           onEndEdit={(id) => setEditingId((current) => (current === id ? null : current))}
           dragPreview={drag}
         />

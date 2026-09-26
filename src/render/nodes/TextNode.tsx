@@ -1,6 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import type { NodeTypeDef, NodeViewProps } from '../registry'
 
+// The three numbers the laid-out height of a one-line node is made of. They
+// are constants rather than literals inside the style block because
+// `defaultSize` below is derived from them: a node is created at an estimated
+// height and then corrected by measurement, and when the estimate is wrong the
+// correction moves the node's height without moving its position — so it ends
+// up off-centre from the point it was created at, and a child spawned off a
+// handle sits off its parent's axis. Keeping the estimate and the style in
+// terms of the same constants is what stops the two drifting apart.
+const PAD_Y = 10
+const PAD_X = 12
+const FONT_PX = 15
+const LINE_RATIO = 1.4
+
+/** What a single unwrapped line of text measures, which is what onMeasure reports. */
+const SINGLE_LINE_H = PAD_Y * 2 + Math.round(FONT_PX * LINE_RATIO)
+
 function TextNodeView({ node, state, onEdit, onMeasure, onEndEdit }: NodeViewProps) {
   const ref = useRef<HTMLDivElement>(null)
   const text = (node.props.text as string) ?? ''
@@ -53,10 +69,10 @@ function TextNodeView({ node, state, onEdit, onMeasure, onEndEdit }: NodeViewPro
       }}
       style={{
         width: '100%',
-        padding: '10px 12px',
+        padding: `${PAD_Y}px ${PAD_X}px`,
         boxSizing: 'border-box',
         outline: 'none',
-        font: '15px/1.4 system-ui, sans-serif',
+        font: `${FONT_PX}px/${LINE_RATIO} system-ui, sans-serif`,
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
       }}
@@ -69,6 +85,10 @@ function TextNodeView({ node, state, onEdit, onMeasure, onEndEdit }: NodeViewPro
 export const TEXT_NODE_TYPE: NodeTypeDef = {
   type: 'text',
   domOnly: false,
-  defaultSize: () => ({ w: 220, h: 72 }),
+  // Height is the measured height of one line, not a roomier guess. An
+  // over-estimate is not harmless: measurement corrects `h` but never `y`, so
+  // the node settles higher than where it was asked to appear and a spawned
+  // child misses its parent's axis by half the error.
+  defaultSize: () => ({ w: 220, h: SINGLE_LINE_H }),
   View: TextNodeView,
 }
