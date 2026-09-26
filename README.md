@@ -40,7 +40,8 @@ The board lives in IndexedDB under `brainstorm-canvas/default`. Deleting that da
 | Add and connect at once | Drag a `+` handle onto empty canvas — the node is created where you let go |
 | Edit text | Double-click a node; click elsewhere or press `Esc` to finish |
 | Move nodes | Drag them; drag empty canvas to marquee-select |
-| Delete | Select, then `Delete` / `Backspace` |
+| Delete one node | Hover it and click the **×** at its top-right |
+| Delete a selection | Select, then `Delete` / `Backspace` |
 | Connector style | The toolbar's style button cycles curve → elbow → straight |
 | Pan | Middle-drag, or two-finger scroll |
 | Zoom | ⌘/Ctrl + wheel, or the toolbar's zoom buttons |
@@ -52,6 +53,11 @@ gone with them.
 
 A node's four handles appear on hover, one per side, and the side you reach for is the direction
 the new node goes — click the east handle and the child appears to the east, on the parent's axis.
+Hovering starts 10% outside the node on every edge, so the handles do not vanish as you reach for
+them. That margin is hover-only: pressing in it starts a marquee, not a grab on the node.
+
+`Delete` is deliberately inert while a node is open for editing, and every node you create opens
+that way — so the **×** is the way to remove a node you have only just made.
 
 ## Architecture
 
