@@ -34,16 +34,24 @@ The board lives in IndexedDB under `brainstorm-canvas/default`. Deleting that da
 
 | Action | How |
 |---|---|
-| Add a text node | **+ Text** in the toolbar — it opens for editing straight away |
+| Add a text node | Double-click empty canvas — it appears there, ready to type into |
+| Add a linked child | Hover a node, then **click** one of its four `+` handles |
+| Connect two nodes | Hover a node, then **drag** a `+` handle onto another node |
+| Add and connect at once | Drag a `+` handle onto empty canvas — the node is created where you let go |
 | Edit text | Double-click a node; click elsewhere or press `Esc` to finish |
 | Move nodes | Drag them; drag empty canvas to marquee-select |
 | Delete | Select, then `Delete` / `Backspace` |
-| Connect nodes | `c` (or the **Connect** tool), then drag from one node to another |
 | Connector style | The toolbar's style button cycles curve → elbow → straight |
-| Select tool | `v` |
 | Pan | Middle-drag, or two-finger scroll |
 | Zoom | ⌘/Ctrl + wheel, or the toolbar's zoom buttons |
 | Undo / redo | `⌘Z` / `⇧⌘Z`, or the toolbar buttons |
+
+There is no tool mode to be in. Which gesture you get is decided by what you press: a `+` handle
+draws a link, anything else selects and moves. The toolbar has no tool buttons, and `v` / `c` are
+gone with them.
+
+A node's four handles appear on hover, one per side, and the side you reach for is the direction
+the new node goes — click the east handle and the child appears to the east, on the parent's axis.
 
 ## Architecture
 
@@ -93,6 +101,8 @@ Other gaps in this milestone:
 - Node resize is not implemented; text nodes auto-size to their content height only.
 - Connector labels, colours and arrow direction exist in the document model but have no UI; every
   connector is created with the default colour and an end arrow.
+- Connectors cannot be selected or deleted on their own. Deleting either end deletes them.
+- A connector does not follow a node while you drag it; it catches up on release.
 - There is one board (`default`); there is no board list, export or import.
 - Media nodes, drag-and-drop ingest and time-anchored links are Plan 2.
 - If IndexedDB is unavailable (private browsing, exhausted quota), the board reports an error
