@@ -59,6 +59,12 @@ them. That margin is hover-only: pressing in it starts a marquee, not a grab on 
 `Delete` is deliberately inert while a node is open for editing, and every node you create opens
 that way — so the **×** is the way to remove a node you have only just made.
 
+Connectors are drawn as tapered ribbons: wide where they leave their source, narrow where they
+arrive. That taper is what shows direction, so there are no arrowheads. Colour follows the branch —
+a connector takes the colour of the one that arrived at its source, and only a node with nothing
+pointing at it starts a new colour, cycling an eight-entry palette. While you drag one out, the
+preview is the same ribbon in the same colour, so you see what you are about to commit.
+
 ## Architecture
 
 ```
@@ -105,8 +111,9 @@ or a visible "saved" indicator, is a product decision that has not been taken ye
 Other gaps in this milestone:
 
 - Node resize is not implemented; text nodes auto-size to their content height only.
-- Connector labels, colours and arrow direction exist in the document model but have no UI; every
-  connector is created with the default colour and an end arrow.
+- Connector colour is assigned automatically per branch and cannot be chosen or overridden.
+- Connector labels exist in the document model but have no UI. `style.arrow` is still stored and no
+  longer painted — the taper carries direction instead.
 - Connectors cannot be selected or deleted on their own. Deleting either end deletes them.
 - A connector does not follow a node while you drag it; it catches up on release.
 - There is one board (`default`); there is no board list, export or import.
