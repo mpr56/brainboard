@@ -1,6 +1,15 @@
 export type Point = { x: number; y: number }
 export type Rect = { x: number; y: number; w: number; h: number }
 
+/**
+ * A side of a node. Names the direction a spawn handle points, which is also
+ * the direction the child node it creates ends up in.
+ *
+ * Lives here rather than in `tools/` because both geometry and rendering need
+ * it and neither may depend on the tool layer.
+ */
+export type Dir = 'n' | 'e' | 's' | 'w'
+
 export type NodeId = string
 export type EdgeId = string
 export type AssetId = string
