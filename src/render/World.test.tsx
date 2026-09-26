@@ -14,6 +14,7 @@ describe('World', () => {
         onPointerDown={noop}
         onPointerMove={noop}
         onPointerUp={noop}
+        onDoubleClick={noop}
       >
         <div data-testid="child" />
       </World>,
@@ -33,6 +34,7 @@ describe('World', () => {
         onPointerDown={noop}
         onPointerMove={noop}
         onPointerUp={noop}
+        onDoubleClick={noop}
       >
         <div />
       </World>,

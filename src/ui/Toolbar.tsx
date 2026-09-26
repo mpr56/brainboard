@@ -1,8 +1,6 @@
 import type { EdgeStyleKind } from '../types'
 
 type Props = {
-  tool: 'select' | 'connect'
-  onTool: (t: 'select' | 'connect') => void
   onAddText: () => void
   onUndo: () => void
   onRedo: () => void
@@ -35,8 +33,6 @@ const button = (active: boolean): React.CSSProperties => ({
 })
 
 export function Toolbar({
-  tool,
-  onTool,
   onAddText,
   onUndo,
   onRedo,
@@ -62,12 +58,9 @@ export function Toolbar({
         borderRadius: 10,
       }}
     >
-      <button data-testid="tool-select" style={button(tool === 'select')} onClick={() => onTool('select')}>
-        Select
-      </button>
-      <button data-testid="tool-connect" style={button(tool === 'connect')} onClick={() => onTool('connect')}>
-        Connect
-      </button>
+      {/* There is no connect mode to switch into: a link is drawn by dragging
+          a node's hover handle, so the toolbar has no tool buttons at all.
+          Tool choice is made per gesture, from whatever the pointer landed on. */}
       {/* DoD 3: all three routing styles must be reachable, not just the
           default. One cycle button keeps the toolbar's shape. */}
       <button

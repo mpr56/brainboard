@@ -6,7 +6,7 @@ import { transact } from './document/schema'
 import { useEdges, useNodes } from './document/hooks'
 import { useBoard } from './useBoard'
 import { ConnectorLayer } from './render/ConnectorLayer'
-import { nodeMeta, resolveAnchor } from './geometry/anchors'
+import { edgeEndpoint } from './geometry/anchors'
 import { routeEdge } from './geometry/routeEdge'
 import { NodeLayer } from './render/NodeLayer'
 import { Overlay, type PendingPath } from './render/Overlay'
@@ -30,7 +30,6 @@ export function App() {
 
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 })
   const [viewport, setViewport] = useState({ w: 0, h: 0 })
-  const [toolName, setToolName] = useState<'select' | 'connect'>('select')
   const [selection, setSelection] = useState<Set<NodeId>>(new Set())
   const [marquee, setMarquee] = useState<Rect | null>(null)
   const [editingId, setEditingId] = useState<NodeId | null>(null)
@@ -43,7 +42,27 @@ export function App() {
   // is what lets those events be dropped before they cost anything.
   const gestureActive = useRef(false)
 
-  const tool: Tool = toolName === 'select' ? selectTool : connectTool
+  /**
+   * Which tool handles a gesture is decided by what the pointer went down on,
+   * not by a mode the user has to remember they are in.
+   *
+   * Pressing a spawn handle means "draw a link from here"; pressing a media
+   * scrubber means the same thing anchored to a moment. Everything else —
+   * node bodies, empty canvas — is selection and movement. That is what lets
+   * the toolbar have no tool buttons at all: there is no state to get stuck in.
+   */
+  const toolFor = (hit: WorldEvent['hit']): Tool =>
+    hit && (hit.part === 'handle' || hit.part === 'scrubber') ? connectTool : selectTool
+
+  /**
+   * The tool chosen at pointer-down, held for the rest of that gesture.
+   *
+   * onMove and onUp must reach the same tool that saw onDown, whatever is
+   * under the cursor by then — a connect drag passes over other nodes and ends
+   * on empty canvas, and re-deciding per event would hand its onUp to
+   * selectTool, which knows nothing about the pending edge.
+   */
+  const activeTool = useRef<Tool>(selectTool)
 
   // Read once: every text node is created at the type's default size, and the
   // registry entry does not change for the life of the app.
@@ -147,10 +166,29 @@ export function App() {
         if (active instanceof HTMLElement && active.isContentEditable) active.blur()
         setEditingId(null)
       }
-      tool.onDown?.(we, ctx)
+      const chosen = toolFor(we.hit)
+      activeTool.current = chosen
+      chosen.onDown?.(we, ctx)
       forceRender((n) => n + 1)
     },
-    [ctx, editingId, gestures, tool, toWorldEvent],
+    [ctx, editingId, gestures, toWorldEvent],
+  )
+
+  /**
+   * Double-clicking empty canvas makes a node there. On a node it does not:
+   * NodeLayer's own handler starts an edit session, and this fires too because
+   * that event bubbles up to the viewport, so the hit test is what tells the
+   * two apart.
+   */
+  const onDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (hitTestDom(document.elementFromPoint(e.clientX, e.clientY))) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      createNode(
+        screenToWorld({ x: e.clientX - rect.left, y: e.clientY - rect.top }, camera),
+      )
+    },
+    [camera, createNode],
   )
 
   // Ruling 1: `gestures.movePan` is a per-render prop (deps `[camera, onCamera]`
@@ -173,20 +211,20 @@ export function App() {
       // every subsequent hover doing the full work forever.
       if (e.buttons === 0) gestureActive.current = false
       if (!gestureActive.current) return
-      tool.onMove?.(toWorldEvent(e, 'move'), ctx)
+      activeTool.current.onMove?.(toWorldEvent(e, 'move'), ctx)
       forceRender((n) => n + 1)
     },
-    [ctx, gestures, tool, toWorldEvent],
+    [ctx, gestures, toWorldEvent],
   )
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
       gestureActive.current = false
       gestures.endPan()
-      tool.onUp?.(toWorldEvent(e, 'up'), ctx)
+      activeTool.current.onUp?.(toWorldEvent(e, 'up'), ctx)
       forceRender((n) => n + 1)
     },
-    [ctx, gestures, tool, toWorldEvent],
+    [ctx, gestures, toWorldEvent],
   )
 
   // Ruling 4: a pointercancel (touch interruption, browser gesture takeover)
@@ -246,7 +284,11 @@ export function App() {
   const pendingPath: PendingPath | null = pendingFrom
     ? {
         points: routeEdge(
-          resolveAnchor(pendingFrom, pending!.fromLocator, nodeMeta(pendingFrom)),
+          // Clipped to the node's boundary for the same reason committed edges
+          // are: a preview starting at the centre spends its first stretch
+          // hidden under the node, so a short drag looks like nothing is
+          // happening. A locator already resolves to a deliberate spot.
+          edgeEndpoint(pendingFrom, pending!.to, pending!.fromLocator),
           pending!.to,
           edgeStyleKind,
         ).points,
@@ -280,8 +322,8 @@ export function App() {
         })
         setSelection(new Set())
       }
-      if (e.key === 'v') setToolName('select')
-      if (e.key === 'c') setToolName('connect')
+      // No tool shortcuts: with connect gone as a mode there is nothing to
+      // switch between, and `v`/`c` would only be a way to get stuck.
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -300,8 +342,6 @@ export function App() {
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <Toolbar
-        tool={toolName}
-        onTool={setToolName}
         onAddText={onAddText}
         onUndo={() => undo.undo()}
         onRedo={() => undo.redo()}
@@ -319,6 +359,7 @@ export function App() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onDoubleClick={onDoubleClick}
       >
         <ConnectorLayer edges={edges} nodesById={nodesById} />
         <NodeLayer

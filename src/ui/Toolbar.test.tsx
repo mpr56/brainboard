@@ -6,8 +6,6 @@ import { EDGE_STYLE_KINDS, Toolbar, nextEdgeStyle } from './Toolbar'
 const toolbar = (edgeStyle: EdgeStyleKind, onEdgeStyle = vi.fn()) => {
   render(
     <Toolbar
-      tool="select"
-      onTool={vi.fn()}
       onAddText={vi.fn()}
       onUndo={vi.fn()}
       onRedo={vi.fn()}

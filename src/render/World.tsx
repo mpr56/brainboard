@@ -9,6 +9,7 @@ type Props = {
   onPointerDown: (e: React.PointerEvent) => void
   onPointerMove: (e: React.PointerEvent) => void
   onPointerUp: (e: React.PointerEvent) => void
+  onDoubleClick: (e: React.MouseEvent) => void
 }
 
 export function World({ camera, children, onViewport, ...handlers }: Props) {

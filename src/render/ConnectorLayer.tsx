@@ -1,6 +1,6 @@
-import { nodeMeta, resolveAnchor } from '../geometry/anchors'
+import { edgeEndpoint } from '../geometry/anchors'
 import { routeEdge } from '../geometry/routeEdge'
-import type { Edge, Node, NodeId } from '../types'
+import type { Edge, Node, NodeId, Point } from '../types'
 
 type Props = { edges: Edge[]; nodesById: Map<NodeId, Node> }
 
@@ -10,6 +10,8 @@ type Props = { edges: Edge[]; nodesById: Map<NodeId, Node> }
  * defined per distinct colour in use and referenced by id.
  */
 const markerId = (color: string) => `arrow-${color.replace(/[^a-zA-Z0-9]/g, '')}`
+
+const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
 
 export function ConnectorLayer({ edges, nodesById }: Props) {
   const arrowColors = [
@@ -53,8 +55,13 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
         const to = nodesById.get(edge.to.nodeId)
         if (!from || !to) return null
 
-        const a = resolveAnchor(from, edge.from.locator, nodeMeta(from))
-        const b = resolveAnchor(to, edge.to.locator, nodeMeta(to))
+        // Both endpoints are clipped against the *centres*, not against each
+        // other's clipped result. Clipping a toward an already-clipped b would
+        // make the geometry depend on which end was computed first, so the
+        // same pair of nodes would route differently depending on edge
+        // direction.
+        const a = edgeEndpoint(from, centreOf(to), edge.from.locator)
+        const b = edgeEndpoint(to, centreOf(from), edge.to.locator)
         const path = routeEdge(a, b, edge.style.kind)
         const marker = `url(#${markerId(edge.style.color)})`
         const { arrow } = edge.style
