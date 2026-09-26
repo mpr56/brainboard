@@ -306,6 +306,163 @@ test('double-clicking a handle spawns children without editing the parent', asyn
   await expect(bodies.first()).toHaveAttribute('contenteditable', 'false')
 })
 
+// Regression: nothing disabled native text selection, so any drag across the
+// board — pulling a connector, marquee-selecting, panning — also ran the
+// browser's own drag-select and painted every node it swept over blue.
+test('dragging a connector does not select text across the board', async ({ page }) => {
+  // Three nodes strung left to right, so the drag below actually sweeps the
+  // pointer over other nodes' text. A drag across empty canvas has nothing to
+  // select and would pass whether or not selection is disabled.
+  for (const [x, y, label] of [[220, 200, 'alpha'], [540, 205, 'beta'], [860, 210, 'gamma']] as const) {
+    await page.mouse.dblclick(x, y)
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type(label)
+    await page.mouse.click(700, 650)
+  }
+
+  const bodies = page.getByTestId('text-node-body')
+  expect(await bodies.allTextContents()).toEqual(['alpha', 'beta', 'gamma'])
+  const box = await bodies.nth(0).boundingBox()
+  if (!box) throw new Error('expected the first node to be visible')
+
+  // Drag the first node's body straight through the other two. This is the
+  // gesture that reproduces: measured against a build without the fix it
+  // leaves a live selection ("lpha"), which is what paints the board blue.
+  await page.mouse.move(box.x + 20, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(600, 205, { steps: 8 })
+  await page.mouse.move(900, 215, { steps: 8 })
+  await page.mouse.up()
+
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+})
+
+test('marquee-dragging across nodes does not select their text', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+
+  await page.mouse.move(box.x - 80, box.y - 80)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width + 80, box.y + box.height + 80, { steps: 10 })
+  await page.mouse.up()
+
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+})
+
+// Selection has to come back for the node actually being edited, or the caret
+// cannot be placed and select-all inside the editor does nothing — which would
+// break every "select all and retype" flow in this suite.
+test('text is still selectable inside the node being edited', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('replaced wholesale')
+  await page.mouse.click(300, 700)
+  await expect(page.getByTestId('text-node-body').first()).toHaveText('replaced wholesale')
+})
+
+test('a node can be deleted with its × button, connectors and all', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+  await dragFromHandle(page, 0, 'e', { x: 900, y: 500 })
+  await expect(page.getByTestId('text-node-body')).toHaveCount(2)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+
+  const child = page.getByTestId('text-node-body').nth(1)
+  await child.hover()
+  await page.locator('[data-part="delete"]').nth(1).click()
+
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+  // removeNode cascades: an edge pointing at a node that is gone would paint
+  // nothing and break the next render that dereferences it.
+  await expect(page.locator('[data-edge-id]')).toHaveCount(0)
+})
+
+// The reason the × exists at all. A node created by a handle or a double-click
+// opens for editing, and the Delete key is deliberately inert while typing —
+// so until now a node you had just made could not be deleted without first
+// clicking away from it.
+test('the × deletes a node that is still in its edit session', async ({ page }) => {
+  await page.mouse.dblclick(640, 400)
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+  await expect(page.getByTestId('text-node-body').first()).toHaveAttribute(
+    'contenteditable',
+    'true',
+  )
+
+  await page.getByTestId('text-node-body').first().hover()
+  await page.locator('[data-part="delete"]').first().click()
+  await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+
+  // And the board must not be stuck in typing mode afterwards: a node deleted
+  // while it was the one being edited used to leave editingId pointing at it,
+  // which made every later keystroke count as typing.
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(300, 700)
+  await page.getByTestId('text-node-body').first().click()
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+})
+
+test('deleting a node is one undo step', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+  await dragFromHandle(page, 0, 'e', { x: 900, y: 500 })
+
+  await page.getByTestId('text-node-body').nth(1).hover()
+  await page.locator('[data-part="delete"]').nth(1).click()
+  await expect(page.getByTestId('text-node-body')).toHaveCount(1)
+
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.getByTestId('text-node-body')).toHaveCount(2)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+})
+
+// The halo widens the area that counts as hovering, so the handles do not
+// blink out as the pointer leaves the border on its way to one.
+test('handles appear from just outside the node, not only over it', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+
+  const east = page.locator('[data-part="handle"][data-dir="e"]').first()
+  await expect(east).toHaveCSS('opacity', '0')
+
+  // Outside the node's own box, inside the 10% halo.
+  await page.mouse.move(box.x + box.width + box.width * 0.05, box.y + box.height / 2)
+  await expect(east).toHaveCSS('opacity', '1')
+})
+
+// The halo must not swallow presses. It is hoverable, but hit-testing has to
+// treat it as canvas or clicking near a node would grab the node and a marquee
+// could never start in that space.
+test('pressing inside the halo starts a marquee rather than grabbing the node', async ({
+  page,
+}) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+
+  // Left of the node, but high enough to clear the west handle — the handles
+  // sit inside the halo and rightly take precedence over it, so a point under
+  // one would start a connector instead and prove nothing about the halo.
+  await page.mouse.move(box.x - 10, box.y + 6)
+  await page.mouse.down()
+  await page.mouse.move(box.x - 200, box.y - 140, { steps: 6 })
+  await expect(page.getByTestId('marquee')).toBeVisible()
+  await page.mouse.up()
+
+  // And the node did not move.
+  const after = await page.getByTestId('text-node-body').first().boundingBox()
+  expect(after).toEqual(box)
+})
+
 // The document stores a node's size, and a view reports its real laid-out
 // height back so the document stays the source of truth. A node is created at
 // an *estimated* height before anything is laid out, and if that estimate is

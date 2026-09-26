@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { Node } from '../types'
+import { hitTestDom } from '../tools/hitTest'
 import { NodeLayer } from './NodeLayer'
 
 const node = (id: string, text: string): Node => ({
@@ -23,6 +24,7 @@ const layer = (over: Partial<React.ComponentProps<typeof NodeLayer>> = {}) => {
     onEdit: vi.fn(),
     onMeasure: vi.fn(),
     onEndEdit: vi.fn(),
+    onDelete: vi.fn(),
     ...over,
   }
   render(<NodeLayer {...props} />)
@@ -116,12 +118,83 @@ describe('NodeLayer', () => {
       )
     })
 
+    // The gap between a node's border and its handles, and the moment of
+    // leaving the border on the way to one, both un-hover the node. The halo
+    // is what stops the handles blinking out mid-reach.
+    it('surrounds each node with a hover halo 10% past every edge', () => {
+      layer({ editingId: null })
+      const halo = screen.getByTestId('halo-n1')
+      expect(halo.style.inset).toBe('-10%')
+      // Behind the node, so it never covers the body's own hit area.
+      expect(halo.style.zIndex).toBe('-1')
+    })
+
+    // Without data-hit="none" the hit-test walk would reach the node and
+    // report it, so pressing anywhere near a node would select it and a
+    // marquee could never be started from that space.
+    it('marks the halo as hover-only so a press inside it still hits canvas', () => {
+      layer({ editingId: null })
+      expect(screen.getByTestId('halo-n1').getAttribute('data-hit')).toBe('none')
+      expect(hitTestDom(screen.getByTestId('halo-n1'))).toBeNull()
+    })
+
     it('hides them again while the node is being dragged', () => {
       layer({ editingId: null, dragPreview: { ids: new Set(['n1']), dx: 5, dy: 5 } })
       const css = document.querySelector('style')!.textContent!
       expect(css).toMatch(/\[data-dragging="true"\]\s*>\s*\[data-part="handle"\][^}]*opacity:\s*0/)
     })
 
+  })
+
+  describe('delete button', () => {
+    it('gives every node one', () => {
+      layer({ editingId: null })
+      expect(screen.getByTestId('delete-n1')).toBeDefined()
+      expect(screen.getByTestId('delete-n2')).toBeDefined()
+    })
+
+    it('deletes its own node', () => {
+      const onDelete = vi.fn()
+      layer({ editingId: null, onDelete })
+      fireEvent.pointerDown(screen.getByTestId('delete-n2'))
+      expect(onDelete).toHaveBeenCalledWith('n2')
+    })
+
+    // Deliberately pointer-down, not click: the viewport captures the pointer
+    // and the spec retargets `click` to the capturing element, so an onClick
+    // bound here would never fire in the real app — the same trap that left
+    // NodeLayer's old double-click handler dead.
+    it('acts on pointer-down, because click never reaches it in the real app', () => {
+      const onDelete = vi.fn()
+      layer({ editingId: null, onDelete })
+      fireEvent.click(screen.getByTestId('delete-n1'))
+      expect(onDelete).not.toHaveBeenCalled()
+      fireEvent.pointerDown(screen.getByTestId('delete-n1'))
+      expect(onDelete).toHaveBeenCalledWith('n1')
+    })
+
+    // Otherwise the viewport also sees the press and starts selecting or
+    // dragging the node that is about to disappear.
+    it('stops the press reaching the board underneath', () => {
+      const onDelete = vi.fn()
+      const onBoardPointerDown = vi.fn()
+      render(
+        <div onPointerDown={onBoardPointerDown}>
+          <NodeLayer
+            nodes={[node('n3', 'third')]}
+            selection={new Set()}
+            editingId={null}
+            onEdit={vi.fn()}
+            onMeasure={vi.fn()}
+            onEndEdit={vi.fn()}
+            onDelete={onDelete}
+          />
+        </div>,
+      )
+      fireEvent.pointerDown(screen.getByTestId('delete-n3'))
+      expect(onDelete).toHaveBeenCalledWith('n3')
+      expect(onBoardPointerDown).not.toHaveBeenCalled()
+    })
   })
 
   // Spec §7: the ephemeral drag store exists so the gesture can be *seen*.
@@ -151,6 +224,7 @@ describe('NodeLayer', () => {
           onEdit={vi.fn()}
           onMeasure={vi.fn()}
           onEndEdit={vi.fn()}
+          onDelete={vi.fn()}
           dragPreview={{ ids: new Set(['n1']), dx: 10, dy: 10 }}
         />,
       )
@@ -163,6 +237,7 @@ describe('NodeLayer', () => {
           onEdit={vi.fn()}
           onMeasure={vi.fn()}
           onEndEdit={vi.fn()}
+          onDelete={vi.fn()}
           dragPreview={{ ids: new Set(['n1']), dx: 90, dy: 55 }}
         />,
       )

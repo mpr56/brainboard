@@ -75,6 +75,16 @@ function TextNodeView({ node, state, onEdit, onMeasure, onEndEdit }: NodeViewPro
         font: `${FONT_PX}px/${LINE_RATIO} system-ui, sans-serif`,
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
+        // The viewport turns text selection off for the whole board, and
+        // `user-select` inherits — so an idle node needs no declaration here
+        // at all. Only the node being edited opts back in, or the caret cannot
+        // be placed and select-all inside the editor does nothing.
+        //
+        // Writing 'none' on the idle branch too would look tidier and be
+        // worse: it would mask the viewport's rule, so losing that rule would
+        // stop failing any test. Leaving it to inherit keeps one owner.
+        userSelect: state.editing ? 'text' : undefined,
+        WebkitUserSelect: state.editing ? 'text' : undefined,
       }}
     >
       {content}

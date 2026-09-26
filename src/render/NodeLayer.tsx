@@ -9,6 +9,8 @@ const HANDLE_DIRS: Dir[] = ['n', 'e', 's', 'w']
 const HANDLE_SIZE = 18
 /** Gap between the node's border and the handle sitting outside it. */
 const HANDLE_OFFSET = 9
+/** Diameter of the delete button at the node's top-right corner. */
+const DELETE_SIZE = 18
 
 /**
  * Handle visibility is CSS-only, deliberately.
@@ -31,19 +33,22 @@ const HANDLE_OFFSET = 9
  * reaching over an adjacent node stays clickable.
  */
 const HANDLE_CSS = `
-[data-node-id] > [data-part="handle"] {
+[data-node-id] > [data-part="handle"],
+[data-node-id] > [data-part="delete"] {
   opacity: 0;
   pointer-events: none;
   transition: opacity .12s ease, transform .12s ease;
 }
-[data-node-id]:hover > [data-part="handle"] {
+[data-node-id]:hover > [data-part="handle"],
+[data-node-id]:hover > [data-part="delete"] {
   opacity: 1;
   pointer-events: auto;
 }
 [data-node-id]:hover {
   z-index: 2147483000;
 }
-[data-node-id][data-dragging="true"] > [data-part="handle"] {
+[data-node-id][data-dragging="true"] > [data-part="handle"],
+[data-node-id][data-dragging="true"] > [data-part="delete"] {
   opacity: 0;
   pointer-events: none;
 }
@@ -52,6 +57,12 @@ const HANDLE_CSS = `
   background: #2d63d6;
   color: #fff;
   border-color: #2d63d6;
+}
+[data-part="delete"]:hover {
+  transform: scale(1.25);
+  background: #c0392b;
+  color: #fff;
+  border-color: #c0392b;
 }
 `
 
@@ -74,6 +85,17 @@ function handlePosition(dir: Dir): React.CSSProperties {
   }
 }
 
+/**
+ * How far beyond each edge a node still counts as hovered, as a fraction of
+ * that edge's own dimension — so it scales with the node rather than being a
+ * fixed pixel ring that feels huge on a small node and mean on a large one.
+ *
+ * Percentages in `inset` resolve against the containing block: left/right
+ * against its width, top/bottom against its height. `-10%` on all four is
+ * exactly "10% bigger on every side".
+ */
+const HOVER_HALO = '-10%'
+
 const HANDLE_LABEL: Record<Dir, string> = {
   n: 'Add a node above',
   e: 'Add a node to the right',
@@ -88,6 +110,8 @@ type Props = {
   onEdit: (id: NodeId, patch: Partial<Node>) => void
   onMeasure: (id: NodeId, h: number) => void
   onEndEdit: (id: NodeId) => void
+  /** Removes this node and every connector touching it, as one undo step. */
+  onDelete: (id: NodeId) => void
   /**
    * In-flight drag offset, world units. Painted on top of the committed
    * document position so the dragged nodes follow the pointer without a
@@ -103,6 +127,7 @@ export function NodeLayer({
   onEdit,
   onMeasure,
   onEndEdit,
+  onDelete,
   dragPreview = null,
 }: Props) {
   // Entering edit mode flips the node's DOM region to contentEditable, but
@@ -154,6 +179,29 @@ export function NodeLayer({
               boxSizing: 'border-box',
             }}
           >
+            {/*
+              Widens the area that counts as hovering this node, so the
+              handles do not vanish the moment the pointer strays off the
+              border on its way to one.
+
+              It is transparent and behind the node (z-index -1), so it never
+              covers the body's own hit area, and it is marked data-hit="none"
+              so hit-testing treats a press inside it as a press on canvas — a
+              marquee, not a selection of the node it surrounds. Without that
+              marker the walk up to the node would report a hit and clicking
+              anywhere near a node would grab it.
+            */}
+            <div
+              data-hit="none"
+              data-testid={`halo-${node.id}`}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: HOVER_HALO,
+                zIndex: -1,
+                borderRadius: 14,
+              }}
+            />
             <View
               node={node}
               state={{ selected, editing: editingId === node.id }}
@@ -193,6 +241,48 @@ export function NodeLayer({
                 +
               </div>
             ))}
+            {/*
+              Deleting needs an affordance of its own. The Delete key only acts
+              when no edit session is open, and every node created by a handle
+              or a double-click opens one — so a node you just made cannot be
+              deleted with the keyboard until you click away from it first.
+
+              This fires on pointer-down rather than click on purpose: the
+              viewport captures the pointer, and per the Pointer Events spec
+              that retargets `click` to the capturing element, so an onClick
+              here would never run. stopPropagation keeps the viewport from
+              also starting a select gesture on the node underneath.
+            */}
+            <div
+              data-part="delete"
+              data-testid={`delete-${node.id}`}
+              title="Delete this node"
+              aria-label="Delete this node"
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                onDelete(node.id)
+              }}
+              style={{
+                position: 'absolute',
+                top: -(DELETE_SIZE / 2) - 4,
+                right: -(DELETE_SIZE / 2) - 4,
+                width: DELETE_SIZE,
+                height: DELETE_SIZE,
+                borderRadius: '50%',
+                border: '2px solid #1a1a1a',
+                background: '#fdfcf9',
+                color: '#1a1a1a',
+                font: '600 11px/1 system-ui, sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              ×
+            </div>
           </div>
         )
       })}

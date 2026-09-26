@@ -85,6 +85,35 @@ export function App() {
     [doc, edgeStyleKind, newNodeSize],
   )
 
+  /**
+   * The one delete path, shared by the keyboard and each node's × button.
+   *
+   * Clearing `editingId` is not housekeeping: if the node being edited is
+   * removed while the flag still points at it, every later keystroke is
+   * treated as typing and Delete stays dead for the rest of the session. The ×
+   * makes that reachable in one click, since a freshly created node is always
+   * the one being edited.
+   *
+   * removeNode already cascades to the connectors touching the node; one
+   * transaction around the whole set makes a multi-node delete one undo step.
+   */
+  const deleteNodes = useCallback(
+    (target: NodeId | NodeId[]) => {
+      const ids = Array.isArray(target) ? target : [target]
+      if (ids.length === 0) return
+      transact(doc, 'user', () => {
+        for (const id of ids) removeNode(doc, id, 'user')
+      })
+      setSelection((prev) => {
+        const next = new Set(prev)
+        for (const id of ids) next.delete(id)
+        return next
+      })
+      setEditingId((current) => (current !== null && ids.includes(current) ? null : current))
+    },
+    [doc],
+  )
+
   const ctx = useMemo(
     () => ({
       doc,
@@ -335,10 +364,7 @@ export function App() {
       if (typing) return
       if ((e.key === 'Delete' || e.key === 'Backspace') && selection.size > 0) {
         e.preventDefault()
-        transact(doc, 'user', () => {
-          for (const id of selection) removeNode(doc, id, 'user')
-        })
-        setSelection(new Set())
+        deleteNodes([...selection])
       }
       // No tool shortcuts: with connect gone as a mode there is nothing to
       // switch between, and `v`/`c` would only be a way to get stuck.
@@ -387,6 +413,7 @@ export function App() {
           onEdit={(id, patch) => updateNode(doc, id, patch, 'user')}
           onMeasure={(id, h) => updateNode(doc, id, { h }, 'system')}
           onEndEdit={(id) => setEditingId((current) => (current === id ? null : current))}
+          onDelete={deleteNodes}
           dragPreview={drag}
         />
       </World>

@@ -22,6 +22,13 @@ export function hitTestDom(target: EventTarget | null): Hit | null {
   let dir: Dir | undefined
 
   while (el) {
+    // An element can be hoverable without being hittable. The halo that widens
+    // a node's hover area is the case this exists for: the browser must see it
+    // to set :hover on the node, but a press inside it is a press on empty
+    // canvas — it must start a marquee, not select the node it surrounds.
+    // Checked before anything else so the walk stops rather than continuing up
+    // to the node and reporting a hit anyway.
+    if (el.getAttribute('data-hit') === 'none') return null
     if (part === null) {
       const attr = el.getAttribute('data-part')
       if (isPart(attr)) {

@@ -36,6 +36,30 @@ describe('hitTestDom', () => {
     expect(hitTestDom(host.querySelector('#i'))).toEqual({ nodeId: 'n4', part: 'body' })
   })
 
+  // A node's hover halo has to be visible to the browser's :hover, but a press
+  // inside it is a press on canvas. Reporting the node would mean clicking
+  // anywhere near a node selected it and no marquee could ever start there.
+  describe('hover-only regions', () => {
+    it('reports no hit for an element marked data-hit="none"', () => {
+      const host = build(
+        '<div data-node-id="n9" data-part="body">' +
+          '<div data-hit="none" id="halo"></div>' +
+          '</div>',
+      )
+      expect(hitTestDom(host.querySelector('#halo'))).toBeNull()
+    })
+
+    it('still reports the node for its other children', () => {
+      const host = build(
+        '<div data-node-id="n10" data-part="body">' +
+          '<div data-hit="none"></div>' +
+          '<span id="text">hi</span>' +
+          '</div>',
+      )
+      expect(hitTestDom(host.querySelector('#text'))).toEqual({ nodeId: 'n10', part: 'body' })
+    })
+  })
+
   // A spawn handle has to say which side of the node it is on: that direction
   // is the whole difference between the four handles, and it decides where the
   // child node a click on it creates ends up.

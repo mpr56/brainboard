@@ -36,6 +36,16 @@ export function World({ camera, children, onViewport, ...handlers }: Props) {
         inset: 0,
         overflow: 'hidden',
         touchAction: 'none',
+        // The board is a gesture surface, not a document. Without this, any
+        // drag across it — moving a node, pulling a connector out of a handle,
+        // marquee-selecting — also runs the browser's native drag-select and
+        // highlights the text of every node the pointer sweeps over.
+        //
+        // `user-select` inherits, so this one declaration covers the whole
+        // board and every node type on it. The text editor is the single place
+        // that opts back in, for the one node being edited.
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
         background: '#eae7df',
         backgroundImage: 'radial-gradient(#d8d4ca 1.3px, transparent 1.3px)',
         backgroundSize: `${22 * camera.zoom}px ${22 * camera.zoom}px`,
