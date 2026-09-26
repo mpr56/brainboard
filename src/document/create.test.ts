@@ -4,6 +4,7 @@ import { getNode, listNodes, addNode } from './nodes'
 import { createDoc } from './schema'
 import { createUndoManager } from './undo'
 import { NEW_NODE_TEXT, createNodeAt } from './create'
+import { BRANCH_PALETTE } from './palette'
 
 const size = { w: 200, h: 80 }
 
@@ -56,7 +57,36 @@ describe('createNodeAt', () => {
     const doc = createDoc()
     const parent = addNode(doc, { type: 'text', x: 0, y: 0, w: 100, h: 50, props: {} })
     createNodeAt(doc, { x: 400, y: 0 }, { size, from: { nodeId: parent }, edgeStyleKind: 'elbow' })
-    expect(listEdges(doc)[0]!.style).toEqual({ kind: 'elbow', arrow: 'end', color: '#1a1a1a' })
+    expect(listEdges(doc)[0]!.style).toEqual({
+      kind: 'elbow',
+      arrow: 'end',
+      // A node with nothing pointing at it starts a new branch, so its first
+      // connector opens the palette.
+      color: BRANCH_PALETTE[0],
+    })
+  })
+
+  it('gives a child the branch colour of the connector that reached its parent', () => {
+    const doc = createDoc()
+    const root = addNode(doc, { type: 'text', x: 0, y: 0, w: 100, h: 50, props: {} })
+    const mid = createNodeAt(doc, { x: 400, y: 0 }, { size, from: { nodeId: root } })
+    const grandchildEdgeBefore = listEdges(doc).length
+
+    createNodeAt(doc, { x: 800, y: 0 }, { size, from: { nodeId: mid } })
+    const [first, second] = listEdges(doc)
+    expect(listEdges(doc)).toHaveLength(grandchildEdgeBefore + 1)
+    expect(second!.style.color).toBe(first!.style.color)
+  })
+
+  it('gives each branch off the same parent its own colour', () => {
+    const doc = createDoc()
+    const root = addNode(doc, { type: 'text', x: 0, y: 0, w: 100, h: 50, props: {} })
+    createNodeAt(doc, { x: 400, y: -200 }, { size, from: { nodeId: root } })
+    createNodeAt(doc, { x: 400, y: 200 }, { size, from: { nodeId: root } })
+
+    const [a, b] = listEdges(doc)
+    expect(a!.style.color).toBe(BRANCH_PALETTE[0])
+    expect(b!.style.color).toBe(BRANCH_PALETTE[1])
   })
 
   // The reason this helper exists at all. addNode and addEdge each open their

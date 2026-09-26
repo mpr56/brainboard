@@ -2,6 +2,7 @@ import type * as Y from 'yjs'
 import type { Anchor, EdgeStyleKind, NodeId, Point } from '../types'
 import { addEdge } from './edges'
 import { addNode } from './nodes'
+import { branchEdgeStyle } from './palette'
 import { transact, type Origin } from './schema'
 
 /** What a freshly spawned node says until the user types over it. */
@@ -58,7 +59,11 @@ export function createNodeAt(
       origin,
     )
     if (from) {
-      addEdge(doc, { from, to: { nodeId: id }, style: { kind: edgeStyleKind } }, origin)
+      addEdge(
+        doc,
+        { from, to: { nodeId: id }, style: branchEdgeStyle(doc, from.nodeId, edgeStyleKind) },
+        origin,
+      )
     }
   })
   return id

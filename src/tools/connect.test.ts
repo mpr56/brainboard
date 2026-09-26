@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createNodeAt } from '../document/create'
-import { listEdges } from '../document/edges'
+import { addEdge, listEdges } from '../document/edges'
+import { BRANCH_PALETTE } from '../document/palette'
 import { addNode, getNode, listNodes } from '../document/nodes'
 import { createDoc } from '../document/schema'
 import { createUndoManager } from '../document/undo'
@@ -150,8 +151,29 @@ describe('connectTool', () => {
       expect(listEdges(h.doc)[0]!.style).toEqual({
         kind: 'elbow',
         arrow: 'end',
-        color: '#1a1a1a',
+        // Node `a` has nothing pointing at it, so this connector starts a new
+        // branch and opens the palette.
+        color: BRANCH_PALETTE[0],
       })
+    })
+
+    // A connector drawn between two existing nodes joins the branch it leaves
+    // from, exactly as a spawned child does.
+    it('takes the branch colour of the node it is drawn from', () => {
+      const h = harness()
+      const c = addNode(h.doc, { type: 'text', x: 600, y: 0, w: 100, h: 50, props: {} })
+      addEdge(h.doc, {
+        from: { nodeId: h.b },
+        to: { nodeId: h.a },
+        style: { color: BRANCH_PALETTE[5] },
+      })
+
+      connectTool.onDown!(ev('down', { x: 50, y: 25 }, { hit: handle(h.a, 'e') }), h.ctx)
+      connectTool.onMove!(ev('move', { x: FAR, y: 25 }), h.ctx)
+      connectTool.onUp!(ev('up', { x: 650, y: 25 }, { hit: { nodeId: c, part: 'body' } }), h.ctx)
+
+      const drawn = listEdges(h.doc).find((e) => e.to.nodeId === c)!
+      expect(drawn.style.color).toBe(BRANCH_PALETTE[5])
     })
 
     it('creates the edge as exactly one undo step', () => {

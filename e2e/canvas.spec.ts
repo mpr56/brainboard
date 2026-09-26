@@ -260,32 +260,122 @@ test('double-clicking a node still edits it rather than creating another', async
   await expect(page.getByTestId('text-node-body')).toHaveCount(1)
 })
 
-// Regression: the arrow marker was painted at the node centre, underneath the
-// node's own opaque div, so no connector has ever visibly pointed anywhere.
-test('a connector`s arrowhead lands outside the node box where it can be seen', async ({
-  page,
-}) => {
+/** Reads a tapered ribbon back into the centreline and widths it was built from. */
+async function ribbonOf(page: Page, selector: string) {
+  return page.evaluate((sel) => {
+    const d = document.querySelector(sel)!.getAttribute('d')!
+    const pts = d
+      .replace(/\s*Z$/, '')
+      .split(/(?=[ML])/)
+      .map((s) => s.trim().replace(/^[ML]\s*/, ''))
+      .filter(Boolean)
+      .map((s) => {
+        const [x, y] = s.split(/\s+/).map(Number)
+        return { x: x!, y: y! }
+      })
+    const n = pts.length / 2
+    const pair = (i: number) => [pts[i]!, pts[pts.length - 1 - i]!] as const
+    const mid = (p: readonly [{ x: number; y: number }, { x: number; y: number }]) => ({
+      x: (p[0].x + p[1].x) / 2,
+      y: (p[0].y + p[1].y) / 2,
+    })
+    const span = (p: readonly [{ x: number; y: number }, { x: number; y: number }]) =>
+      Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y)
+    return {
+      start: mid(pair(0)),
+      end: mid(pair(n - 1)),
+      startWidth: span(pair(0)),
+      endWidth: span(pair(n - 1)),
+    }
+  }, selector)
+}
+
+// Direction used to be carried by an arrow marker painted at the node centre,
+// underneath the node's own opaque div, so no connector visibly pointed
+// anywhere. The taper carries it now and cannot be occluded.
+test('a connector tapers from its source to its target', async ({ page }) => {
   await page.getByTestId('add-text').click()
   await page.mouse.click(600, 600)
   await dragFromHandle(page, 0, 'e', { x: 1000, y: 300 })
 
   const edge = page.locator('[data-edge-id]')
   await expect(edge).toHaveCount(1)
-  await expect(edge).toHaveAttribute('marker-end', /^url\(#arrow-/)
+  // No marker to occlude, and none referenced.
+  await expect(edge).not.toHaveAttribute('marker-end', /.*/)
 
+  const r = await ribbonOf(page, '[data-edge-id]')
+  expect(r.startWidth).toBeGreaterThan(r.endWidth * 2)
+
+  // And it reaches the target's border rather than stopping at — or running
+  // under — its centre, which is where it used to end.
   const target = await page.getByTestId('text-node-body').nth(1).boundingBox()
-  const svgBox = await edge.boundingBox()
-  if (!target || !svgBox) throw new Error('expected both the node and the edge to be visible')
+  if (!target) throw new Error('expected the target node to be visible')
+  const worldEnd = await page.evaluate(() => {
+    const world = document.querySelector('[data-testid="world"]')!
+    return world.getBoundingClientRect()
+  })
+  const endOnScreen = worldEnd.x + r.end.x
+  expect(endOnScreen).toBeGreaterThan(target.x - 12)
+  expect(endOnScreen).toBeLessThan(target.x + target.width / 2)
+})
 
-  // The painted path must reach the target's border rather than stopping at —
-  // or running under — its centre, which is where it used to end. The arrow
-  // marker's tip sits a pixel or two past the path's own end by design, so the
-  // claim is "at the border", not "strictly short of it".
-  const end = svgBox.x + svgBox.width
-  expect(end).toBeGreaterThan(target.x - 12)
-  expect(end).toBeLessThan(target.x + 12)
-  // Unambiguously clear of the centre, which is the defect this guards.
-  expect(end).toBeLessThan(target.x + target.width / 2)
+test('connectors are coloured per branch, and children inherit', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const bodies = page.getByTestId('text-node-body')
+  // Two branches off the same root get two different colours.
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="n"]').first().click()
+  await page.mouse.click(600, 620)
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="s"]').first().click()
+  await page.mouse.click(600, 620)
+
+  await expect(page.locator('[data-edge-id]')).toHaveCount(2)
+  const colors = await page
+    .locator('[data-edge-id]')
+    .evaluateAll((els) => els.map((e) => e.getAttribute('fill')))
+  expect(new Set(colors).size).toBe(2)
+
+  // A grandchild continues its parent's branch rather than starting a new one.
+  await bodies.nth(1).hover()
+  await page.locator('[data-part="handle"][data-dir="e"]').nth(1).click()
+  await page.mouse.click(600, 620)
+
+  const after = await page
+    .locator('[data-edge-id]')
+    .evaluateAll((els) => els.map((e) => e.getAttribute('fill')))
+  expect(after).toHaveLength(3)
+  expect(new Set(after).size).toBe(2)
+})
+
+// The preview's job is to show what you are about to commit, so it has to be
+// the same shape and the same branch colour — not a generic dashed line.
+test('the in-flight preview shows the tapered connector it will become', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+
+  const box = await page.getByTestId('text-node-body').first().boundingBox()
+  if (!box) throw new Error('expected the node to be visible')
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.move(box.x + box.width + 11, box.y + box.height / 2, { steps: 3 })
+  await page.mouse.down()
+  await page.mouse.move(980, 480, { steps: 10 })
+
+  const preview = page.getByTestId('pending-edge')
+  await expect(preview).toBeVisible()
+  const r = await ribbonOf(page, '[data-testid="pending-edge"]')
+  expect(r.startWidth).toBeGreaterThan(r.endWidth * 2)
+
+  const previewFill = await preview.getAttribute('fill')
+  await page.mouse.up()
+
+  // The committed edge is the colour the preview promised.
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+  expect(await page.locator('[data-edge-id]').getAttribute('fill')).toBe(previewFill)
+  await expect(preview).toHaveCount(0)
 })
 
 // Two clicks on a handle are two children. The guard that stops them also
@@ -519,10 +609,38 @@ test('creates a connector with a non-default routing style', async ({ page }) =>
   const path = page.locator('[data-edge-id]')
   await expect(path).toHaveCount(1)
   await expect(path).toHaveAttribute('data-edge-style', 'straight')
-  // A straight edge is a single line segment, never a bezier.
-  expect(await path.getAttribute('d')).toMatch(/^M [\d.-]+ [\d.-]+ L [\d.-]+ [\d.-]+$/)
-  // And the stored arrow is actually painted.
-  await expect(path).toHaveAttribute('marker-end', /^url\(#arrow-/)
+
+  // A straight connector's centreline must not bow. Connectors are painted as
+  // filled ribbons now, so this reads the shape back into the centreline it
+  // was built from rather than pattern-matching the path data.
+  const bowed = await page.evaluate(() => {
+    const d = document.querySelector('[data-edge-id]')!.getAttribute('d')!
+    const pts = d
+      .replace(/\s*Z$/, '')
+      .split(/(?=[ML])/)
+      .map((s) => s.trim().replace(/^[ML]\s*/, ''))
+      .filter(Boolean)
+      .map((s) => {
+        const [x, y] = s.split(/\s+/).map(Number)
+        return { x: x!, y: y! }
+      })
+    const n = pts.length / 2
+    const centre = (i: number) => ({
+      x: (pts[i]!.x + pts[pts.length - 1 - i]!.x) / 2,
+      y: (pts[i]!.y + pts[pts.length - 1 - i]!.y) / 2,
+    })
+    const a = centre(0)
+    const b = centre(n - 1)
+    const chord = Math.hypot(b.x - a.x, b.y - a.y)
+    let worst = 0
+    for (let i = 0; i < n; i++) {
+      const m = centre(i)
+      const cross = (b.x - a.x) * (m.y - a.y) - (b.y - a.y) * (m.x - a.x)
+      worst = Math.max(worst, Math.abs(cross) / chord)
+    }
+    return worst
+  })
+  expect(bowed).toBeLessThan(0.5)
 })
 
 test('zooms about the viewport centre and reports the level', async ({ page }) => {

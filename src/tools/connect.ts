@@ -1,5 +1,6 @@
 import { addEdge } from '../document/edges'
 import { getNode } from '../document/nodes'
+import { branchEdgeStyle } from '../document/palette'
 import { spawnCentre } from '../geometry/spawn'
 import type { Anchor, Dir, Locator, NodeId, Point } from '../types'
 import { pastDragThreshold } from './gesture'
@@ -124,7 +125,7 @@ export const connectTool: Tool = {
         {
           from: anchorFrom(p),
           to: { nodeId: e.hit.nodeId },
-          style: { kind: ctx.edgeStyleKind },
+          style: branchEdgeStyle(ctx.doc, p.fromNodeId, ctx.edgeStyleKind),
         },
         'user',
       )

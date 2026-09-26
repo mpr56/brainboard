@@ -1,48 +1,32 @@
 import { edgeEndpoint } from '../geometry/anchors'
+import { ribbonPath } from '../geometry/ribbon'
 import { routeEdge } from '../geometry/routeEdge'
 import type { Edge, Node, NodeId, Point } from '../types'
 
 type Props = { edges: Edge[]; nodesById: Map<NodeId, Node> }
 
-/**
- * `style.arrow` is stored on every edge, so it has to be painted. Markers
- * cannot inherit the path's stroke reliably across browsers, so one marker is
- * defined per distinct colour in use and referenced by id.
- */
-const markerId = (color: string) => `arrow-${color.replace(/[^a-zA-Z0-9]/g, '')}`
-
 const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
 
+/**
+ * Connectors are painted as tapered ribbons: filled shapes that are wide where
+ * they leave their source and narrow where they arrive.
+ *
+ * That taper is what carries direction, which is why there are no arrowheads
+ * here any more. A marker cannot be made to taper, and a uniform stroke with an
+ * arrow on the end reads as a diagram edge rather than a branch — the shape
+ * itself now says which way the link runs, at any zoom and without a second
+ * element to occlude.
+ *
+ * `style.arrow` is still stored on every edge and is no longer read. It stays
+ * in the document because removing a persisted field is a migration, and Plan 2
+ * may want it back for non-branch link types.
+ */
 export function ConnectorLayer({ edges, nodesById }: Props) {
-  const arrowColors = [
-    ...new Set(
-      edges.filter((e) => e.style && e.style.arrow !== 'none').map((e) => e.style.color),
-    ),
-  ]
-
   return (
     <svg
       data-testid="connector-layer"
       style={{ position: 'absolute', overflow: 'visible', pointerEvents: 'none', left: 0, top: 0 }}
     >
-      <defs>
-        {arrowColors.map((color) => (
-          <marker
-            key={color}
-            id={markerId(color)}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="5"
-            markerHeight="5"
-            // auto-start-reverse lets the same marker serve both ends of a
-            // 'both' edge, pointing outward at each.
-            orient="auto-start-reverse"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
-          </marker>
-        ))}
-      </defs>
       {edges.map((edge) => {
         // `document/edges.ts` already filters structurally-invalid rows out of
         // every read, so this should never fire. It exists because the cost of
@@ -63,8 +47,8 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
         const a = edgeEndpoint(from, centreOf(to), edge.from.locator)
         const b = edgeEndpoint(to, centreOf(from), edge.to.locator)
         const path = routeEdge(a, b, edge.style.kind)
-        const marker = `url(#${markerId(edge.style.color)})`
-        const { arrow } = edge.style
+        const d = ribbonPath(path.points, edge.style.kind)
+        if (!d) return null
 
         return (
           <path
@@ -72,13 +56,10 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
             data-testid={`edge-${edge.id}`}
             data-edge-id={edge.id}
             data-edge-style={edge.style.kind}
-            d={path.d}
-            fill="none"
-            stroke={edge.style.color}
-            strokeWidth={2}
-            markerEnd={arrow === 'end' || arrow === 'both' ? marker : undefined}
-            markerStart={arrow === 'both' ? marker : undefined}
-            style={{ pointerEvents: 'stroke' }}
+            d={d}
+            fill={edge.style.color}
+            stroke="none"
+            style={{ pointerEvents: 'fill' }}
           />
         )
       })}

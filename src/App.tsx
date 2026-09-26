@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { screenToWorld, zoomAt, type Camera } from './camera'
 import { createNodeAt } from './document/create'
 import { removeNode, updateNode } from './document/nodes'
+import { branchColor } from './document/palette'
 import { transact } from './document/schema'
 import { useEdges, useNodes } from './document/hooks'
 import { useBoard } from './useBoard'
@@ -340,6 +341,9 @@ export function App() {
           edgeStyleKind,
         ).points,
         kind: edgeStyleKind,
+        // The colour this connector will actually be given on release, so the
+        // preview shows which branch it is joining rather than a placeholder.
+        color: branchColor(doc, pending!.fromNodeId),
       }
     : null
 
