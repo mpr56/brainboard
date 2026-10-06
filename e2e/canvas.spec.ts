@@ -643,6 +643,32 @@ test('creates a connector with a non-default routing style', async ({ page }) =>
   expect(bowed).toBeLessThan(0.5)
 })
 
+// The style switch is board-wide: it restyles connectors that already exist,
+// not just the next one drawn, and the choice survives a reload.
+test('switching connector style restyles existing connectors', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 600)
+  const bodies = page.getByTestId('text-node-body')
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="e"]').first().click()
+  await bodies.first().hover()
+  await page.locator('[data-part="handle"][data-dir="s"]').first().click()
+
+  const paths = page.locator('[data-edge-id]')
+  await expect(paths).toHaveCount(2)
+  for (const p of await paths.all()) await expect(p).toHaveAttribute('data-edge-style', 'curve')
+
+  await page.getByTestId('edge-style').click()
+  for (const p of await paths.all()) await expect(p).toHaveAttribute('data-edge-style', 'elbow')
+
+  // Every edge was stored as 'curve', so 'elbow' on disk is the board setting.
+  await waitForPersisted(page, 'default', 'elbow')
+  await page.reload()
+  await expect(page.getByTestId('edge-style')).toHaveAttribute('data-edge-style', 'elbow')
+  await expect(paths).toHaveCount(2)
+  for (const p of await paths.all()) await expect(p).toHaveAttribute('data-edge-style', 'elbow')
+})
+
 test('zooms about the viewport centre and reports the level', async ({ page }) => {
   await expect(page.getByTestId('zoom-level')).toHaveText('100%')
   await page.getByTestId('zoom-in').click()

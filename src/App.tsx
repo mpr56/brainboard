@@ -4,10 +4,11 @@ import { createNodeAt } from './document/create'
 import { removeNode, updateNode } from './document/nodes'
 import { branchColor, nodeColor, resolveEdgeColors } from './document/palette'
 import { transact } from './document/schema'
-import { useEdges, useNodes } from './document/hooks'
+import { useEdgeStyle, useEdges, useNodes } from './document/hooks'
+import { setEdgeStyle } from './document/settings'
 import { useBoard } from './useBoard'
 import { ConnectorLayer } from './render/ConnectorLayer'
-import { edgeEndpoint } from './geometry/anchors'
+import { nodePort } from './geometry/anchors'
 import { routeEdge } from './geometry/routeEdge'
 import { NodeLayer } from './render/NodeLayer'
 import { Overlay, type PendingPath } from './render/Overlay'
@@ -28,7 +29,7 @@ import type { Tool, WorldEvent } from './tools/types'
 import { ColorWheel } from './ui/ColorWheel'
 import { FormatBar } from './ui/FormatBar'
 import { Toolbar } from './ui/Toolbar'
-import type { Anchor, EdgeStyleKind, Node, NodeId, Point, Rect } from './types'
+import type { Anchor, Node, NodeId, Point, Rect } from './types'
 
 const BOARD_ID = 'default'
 
@@ -36,13 +37,15 @@ export function App() {
   const { doc, store, undo, ready, error } = useBoard(BOARD_ID)
   const nodes = useNodes(store)
   const edges = useEdges(store)
+  // A board-wide setting, not per-edge: the toolbar switch restyles every
+  // connector at once (see document/settings.ts).
+  const edgeStyleKind = useEdgeStyle(store)
 
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 })
   const [viewport, setViewport] = useState({ w: 0, h: 0 })
   const [selection, setSelection] = useState<Set<NodeId>>(new Set())
   const [marquee, setMarquee] = useState<Rect | null>(null)
   const [editingId, setEditingId] = useState<NodeId | null>(null)
-  const [edgeStyleKind, setEdgeStyleKind] = useState<EdgeStyleKind>('curve')
   const [, forceRender] = useState(0)
 
   const gestures = useCameraGestures(camera, setCamera)
@@ -352,16 +355,21 @@ export function App() {
   // would have disagreed in position too once Plan 2 lands scrubber anchors.
   const pending = pendingEdge()
   const pendingFrom = pending ? nodesById.get(pending.fromNodeId) : undefined
-  const pendingPath: PendingPath | null = pendingFrom
+  // Snapped to a side midpoint for the same reason committed edges are, with
+  // the cursor treated as a zero-size box. A locator already resolves to a
+  // deliberate spot.
+  const pendingPort = pendingFrom
+    ? nodePort(pendingFrom, { ...pending!.to, w: 0, h: 0 }, pending!.fromLocator)
+    : null
+  const pendingPath: PendingPath | null = pendingPort
     ? {
         points: routeEdge(
-          // Clipped to the node's boundary for the same reason committed edges
-          // are: a preview starting at the centre spends its first stretch
-          // hidden under the node, so a short drag looks like nothing is
-          // happening. A locator already resolves to a deliberate spot.
-          edgeEndpoint(pendingFrom, pending!.to, pending!.fromLocator),
+          pendingPort.point,
           pending!.to,
           edgeStyleKind,
+          // The cursor end has no side; routeEdge mirrors this one, so the
+          // preview arrives square-on the way the committed edge will.
+          pendingPort.side,
         ).points,
         kind: edgeStyleKind,
         // The colour this connector will actually be given on release, so the
@@ -433,7 +441,7 @@ export function App() {
           setCamera((c) => zoomAt(c, { x: viewport.w / 2, y: viewport.h / 2 }, factor))
         }
         edgeStyle={edgeStyleKind}
-        onEdgeStyle={setEdgeStyleKind}
+        onEdgeStyle={(kind) => setEdgeStyle(doc, kind)}
       />
       <World
         camera={camera}
@@ -444,7 +452,7 @@ export function App() {
         onPointerUp={onPointerUp}
         onDoubleClick={onDoubleClick}
       >
-        <ConnectorLayer edges={edges} nodesById={paintedById} colors={edgeColors} />
+        <ConnectorLayer edges={edges} nodesById={paintedById} colors={edgeColors} kind={edgeStyleKind} />
         <NodeLayer
           nodes={shown}
           selection={selection}

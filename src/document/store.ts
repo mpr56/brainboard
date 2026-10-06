@@ -1,13 +1,15 @@
 import type * as Y from 'yjs'
-import type { Edge, Node } from '../types'
+import type { Edge, EdgeStyleKind, Node } from '../types'
 import { listEdges } from './edges'
 import { listNodes } from './nodes'
-import { edgesMap, nodesMap } from './schema'
+import { edgesMap, metaMap, nodesMap } from './schema'
+import { readEdgeStyle } from './settings'
 
 export type DocStore = {
   subscribe(fn: () => void): () => void
   getNodes(): Node[]
   getEdges(): Edge[]
+  getEdgeStyle(): EdgeStyleKind
   getRevision(): number
   destroy(): void
 }
@@ -21,15 +23,22 @@ export function createDocStore(doc: Y.Doc): DocStore {
   let edgesRevision = -1
   let edgesCache: Edge[] = []
 
+  const notify = () => {
+    for (const fn of listeners) fn()
+  }
   const bump = () => {
     revision += 1
-    for (const fn of listeners) fn()
+    notify()
   }
 
   const nodes = nodesMap(doc)
   const edges = edgesMap(doc)
+  const meta = metaMap(doc)
   nodes.observeDeep(bump)
   edges.observeDeep(bump)
+  // Board settings change no node or edge, so they notify without bumping the
+  // revision: the cached node and edge arrays stay referentially stable.
+  meta.observe(notify)
 
   return {
     subscribe(fn) {
@@ -50,10 +59,12 @@ export function createDocStore(doc: Y.Doc): DocStore {
       }
       return edgesCache
     },
+    getEdgeStyle: () => readEdgeStyle(doc),
     getRevision: () => revision,
     destroy() {
       nodes.unobserveDeep(bump)
       edges.unobserveDeep(bump)
+      meta.unobserve(notify)
       listeners.clear()
     },
   }

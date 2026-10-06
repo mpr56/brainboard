@@ -33,4 +33,21 @@ describe('routeEdge', () => {
     const path = routeEdge(A, A, 'curve')
     expect(path.d).not.toContain('NaN')
   })
+
+  it('leaves and arrives perpendicular to the given sides', () => {
+    // Bottom of one node to the top of another below it: the handles run
+    // vertically, so the curve meets each box square-on.
+    const path = routeEdge({ x: 0, y: 0 }, { x: 100, y: 200 }, 'curve', 's', 'n')
+    expect(path.d).toBe('M 0 0 C 0 100, 100 100, 100 200')
+  })
+
+  it('bends an elbow through a horizontal mid-line between top and bottom', () => {
+    const path = routeEdge({ x: 0, y: 0 }, { x: 100, y: 200 }, 'elbow', 's', 'n')
+    expect(path.points).toEqual([{ x: 0, y: 0 }, { x: 0, y: 100 }, { x: 100, y: 100 }, { x: 100, y: 200 }])
+  })
+
+  it('infers the missing side as the opposite of the known one', () => {
+    const path = routeEdge({ x: 0, y: 0 }, { x: 100, y: -200 }, 'curve', undefined, 's')
+    expect(path.d).toBe('M 0 0 C 0 -100, 100 -100, 100 -200')
+  })
 })

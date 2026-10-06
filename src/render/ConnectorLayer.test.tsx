@@ -104,6 +104,20 @@ describe('ConnectorLayer', () => {
     expect(r.end.x).toBeCloseTo(70, 1)
   })
 
+  // The screenshot bug: a child diagonally above its parent got endpoints
+  // wherever the centre-to-centre ray crossed each border, off-centre and on
+  // the wrong edge, and the curve then left the top of a box sideways.
+  it('snaps to the facing side midpoints when one node is above the other', () => {
+    const diag = new Map([
+      ['a', node('a', 0)],
+      ['b', { ...node('b', 80), y: -300 }],
+    ])
+    render(<ConnectorLayer edges={[edge]} nodesById={diag} />)
+    const r = shapeOf('edge-e1')
+    expect(r.start).toEqual({ x: expect.closeTo(50, 1), y: expect.closeTo(0, 1) })
+    expect(r.end).toEqual({ x: expect.closeTo(130, 1), y: expect.closeTo(-250, 1) })
+  })
+
   it('skips an edge whose endpoint node is missing', () => {
     const orphan: Edge = { ...edge, id: 'e2', to: { nodeId: 'gone' } }
     render(<ConnectorLayer edges={[orphan]} nodesById={nodesById} />)
@@ -223,6 +237,15 @@ describe('routing styles', () => {
       return d
     })
     expect(new Set(ds).size).toBe(3)
+  })
+})
+
+describe('board-wide routing style', () => {
+  it('paints every edge in the board style, whatever each one stored', () => {
+    const elbow: Edge = { ...edge, id: 'el', style: { ...edge.style, kind: 'elbow' } }
+    render(<ConnectorLayer edges={[edge, elbow]} nodesById={nodesById} kind="curve" />)
+    expect(screen.getByTestId('edge-e1').getAttribute('data-edge-style')).toBe('curve')
+    expect(screen.getByTestId('edge-el').getAttribute('data-edge-style')).toBe('curve')
   })
 })
 

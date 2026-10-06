@@ -26,6 +26,7 @@ const EMPTY_STORE: DocStore = {
   subscribe: () => () => {},
   getNodes: () => EMPTY_NODES,
   getEdges: () => EMPTY_EDGES,
+  getEdgeStyle: () => 'curve',
   getRevision: () => 0,
   destroy: () => {},
 }

@@ -1,7 +1,7 @@
-import { edgeEndpoint } from '../geometry/anchors'
+import { nodePort } from '../geometry/anchors'
 import { ribbonPath } from '../geometry/ribbon'
 import { routeEdge } from '../geometry/routeEdge'
-import type { Edge, EdgeId, Node, NodeId, Point } from '../types'
+import type { Edge, EdgeId, EdgeStyleKind, Node, NodeId } from '../types'
 
 type Props = {
   edges: Edge[]
@@ -11,9 +11,13 @@ type Props = {
    * `resolveEdgeColors`. An edge missing from it paints with what it stored.
    */
   colors?: Map<EdgeId, string>
+  /**
+   * The board's routing style. It applies to every connector at once, so the
+   * toolbar switch restyles the whole board rather than only edges drawn
+   * after it. An edge's stored `style.kind` is used only when this is absent.
+   */
+  kind?: EdgeStyleKind
 }
-
-const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
 
 /**
  * Connectors are painted as tapered ribbons: filled shapes that are wide where
@@ -29,7 +33,7 @@ const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
  * in the document because removing a persisted field is a migration, and Plan 2
  * may want it back for non-branch link types.
  */
-export function ConnectorLayer({ edges, nodesById, colors }: Props) {
+export function ConnectorLayer({ edges, nodesById, colors, kind }: Props) {
   return (
     <svg
       data-testid="connector-layer"
@@ -47,15 +51,14 @@ export function ConnectorLayer({ edges, nodesById, colors }: Props) {
         const to = nodesById.get(edge.to.nodeId)
         if (!from || !to) return null
 
-        // Both endpoints are clipped against the *centres*, not against each
-        // other's clipped result. Clipping a toward an already-clipped b would
-        // make the geometry depend on which end was computed first, so the
-        // same pair of nodes would route differently depending on edge
-        // direction.
-        const a = edgeEndpoint(from, centreOf(to), edge.from.locator)
-        const b = edgeEndpoint(to, centreOf(from), edge.to.locator)
-        const path = routeEdge(a, b, edge.style.kind)
-        const d = ribbonPath(path.points, edge.style.kind)
+        // Each end picks its side from the two *boxes*, never from the other
+        // end's result, so the same pair of nodes routes identically whichever
+        // way the edge points.
+        const a = nodePort(from, to, edge.from.locator)
+        const b = nodePort(to, from, edge.to.locator)
+        const style = kind ?? edge.style.kind
+        const path = routeEdge(a.point, b.point, style, a.side, b.side)
+        const d = ribbonPath(path.points, style)
         if (!d) return null
 
         return (
@@ -63,7 +66,7 @@ export function ConnectorLayer({ edges, nodesById, colors }: Props) {
             key={edge.id}
             data-testid={`edge-${edge.id}`}
             data-edge-id={edge.id}
-            data-edge-style={edge.style.kind}
+            data-edge-style={style}
             d={d}
             fill={colors?.get(edge.id) ?? edge.style.color}
             stroke="none"

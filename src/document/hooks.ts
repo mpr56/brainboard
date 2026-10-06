@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { Edge, Node } from '../types'
+import type { Edge, EdgeStyleKind, Node } from '../types'
 import type { DocStore } from './store'
 
 export function useNodes(store: DocStore): Node[] {
@@ -8,4 +8,8 @@ export function useNodes(store: DocStore): Node[] {
 
 export function useEdges(store: DocStore): Edge[] {
   return useSyncExternalStore(store.subscribe, store.getEdges, store.getEdges)
+}
+
+export function useEdgeStyle(store: DocStore): EdgeStyleKind {
+  return useSyncExternalStore(store.subscribe, store.getEdgeStyle, store.getEdgeStyle)
 }
