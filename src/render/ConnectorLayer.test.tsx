@@ -225,3 +225,15 @@ describe('routing styles', () => {
     expect(new Set(ds).size).toBe(3)
   })
 })
+
+describe('ConnectorLayer colours', () => {
+  it('paints with the resolved colour over the stored one', () => {
+    render(<ConnectorLayer edges={[edge]} nodesById={nodesById} colors={new Map([['e1', '#5b7fc4']])} />)
+    expect(screen.getByTestId('edge-e1').getAttribute('fill')).toBe('#5b7fc4')
+  })
+
+  it('falls back to the stored colour for an edge it has no colour for', () => {
+    render(<ConnectorLayer edges={[edge]} nodesById={nodesById} colors={new Map()} />)
+    expect(screen.getByTestId('edge-e1').getAttribute('fill')).toBe('#1a1a1a')
+  })
+})

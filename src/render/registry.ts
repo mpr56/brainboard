@@ -8,8 +8,12 @@ export type NodeViewProps = {
   state: NodeViewState
   /** Commit a user-intent change (undoable). */
   onEdit: (patch: Partial<Node>) => void
-  /** Report measured height so the document stays the source of truth (rule 1). */
-  onMeasure: (h: number) => void
+  /**
+   * Report the laid-out size so the document stays the source of truth
+   * (rule 1). Width matters only for views that size themselves to their
+   * content; the rest report the width they were given.
+   */
+  onMeasure: (size: { w: number; h: number }) => void
   /**
    * Signal that this node's edit session has genuinely ended (the view lost
    * focus). Without it nothing upstream can clear `editingId`, so the node

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { screenToWorld, zoomAt, type Camera } from './camera'
+import { screenToWorld, worldRectToScreen, zoomAt, type Camera } from './camera'
 import { createNodeAt } from './document/create'
 import { removeNode, updateNode } from './document/nodes'
-import { branchColor } from './document/palette'
+import { branchColor, nodeColor, resolveEdgeColors } from './document/palette'
 import { transact } from './document/schema'
 import { useEdges, useNodes } from './document/hooks'
 import { useBoard } from './useBoard'
@@ -13,14 +13,22 @@ import { NodeLayer } from './render/NodeLayer'
 import { Overlay, type PendingPath } from './render/Overlay'
 import { World } from './render/World'
 import { getNodeType } from './render/registry'
+import {
+  applyPreset,
+  readTextStyle,
+  stepFontSize,
+  withTextStyle,
+} from './render/nodes/textStyle'
 import { visibleNodes } from './render/visibleNodes'
 import { useCameraGestures } from './render/useCameraGestures'
 import { connectTool, pendingEdge, resetConnectTool } from './tools/connect'
 import { hitTestDom } from './tools/hitTest'
 import { dragPreview, resetSelectTool, selectTool } from './tools/select'
 import type { Tool, WorldEvent } from './tools/types'
+import { ColorWheel } from './ui/ColorWheel'
+import { FormatBar } from './ui/FormatBar'
 import { Toolbar } from './ui/Toolbar'
-import type { Anchor, EdgeStyleKind, NodeId, Point, Rect } from './types'
+import type { Anchor, EdgeStyleKind, Node, NodeId, Point, Rect } from './types'
 
 const BOARD_ID = 'default'
 
@@ -322,6 +330,21 @@ export function App() {
   // tool state that the forceRender after each pointer event republishes.
   const drag = dragPreview()
 
+  // Connectors are drawn against where the nodes *appear*, not where the
+  // document has them. During a drag those differ by the in-flight offset, and
+  // drawing against the document left every connector behind until release.
+  const paintedById = drag ? offsetNodes(nodesById, drag) : nodesById
+
+  // Resolved from structure on every document change, not read off each edge:
+  // a node's colour flows down its branch, and old boards stored every
+  // connector as black (see palette.ts).
+  const edgeColors = useMemo(() => resolveEdgeColors(nodes, edges), [nodes, edges])
+
+  const setProps = useCallback(
+    (id: NodeId, props: Record<string, unknown>) => updateNode(doc, id, { props }, 'user'),
+    [doc],
+  )
+
   // Rule 4: the preview is routed by `geometry/`, with the same anchor
   // resolution and the same routing style the committed edge will get. It used
   // to be a straight line drawn from a locally-duplicated node centre, so the
@@ -362,7 +385,10 @@ export function App() {
       // means editingId flips to null and returns immediately, without
       // falling through to Delete/v/c on the same keystroke.
       if (e.key === 'Escape') {
+        // First press leaves the editor, the next one lets go of the
+        // selection — which is also what closes the colour wheel.
         if (typing) setEditingId(null)
+        else setSelection(new Set())
         return
       }
       if (typing) return
@@ -387,6 +413,15 @@ export function App() {
 
   if (!ready) return <div data-testid="loading">Loading board…</div>
 
+  // The text being edited gets the format bar. A node that is simply clicked —
+  // the only thing selected, nothing in flight — gets the colour wheel.
+  const editNode = editingId !== null ? paintedById.get(editingId) : undefined
+  const wheelNode =
+    !editNode && selection.size === 1 && !drag && !pending && !marquee
+      ? paintedById.get([...selection][0]!)
+      : undefined
+  const screenBox = (n: Node) => worldRectToScreen({ x: n.x, y: n.y, w: n.w, h: n.h }, camera)
+
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <Toolbar
@@ -409,19 +444,85 @@ export function App() {
         onPointerUp={onPointerUp}
         onDoubleClick={onDoubleClick}
       >
-        <ConnectorLayer edges={edges} nodesById={nodesById} />
+        <ConnectorLayer edges={edges} nodesById={paintedById} colors={edgeColors} />
         <NodeLayer
           nodes={shown}
           selection={selection}
           editingId={editingId}
           onEdit={(id, patch) => updateNode(doc, id, patch, 'user')}
-          onMeasure={(id, h) => updateNode(doc, id, { h }, 'system')}
+          onMeasure={(id, size) => {
+            const n = nodesById.get(id)
+            if (!n) return
+            const patch: Partial<Node> = {}
+            if (Math.abs(size.h - n.h) > 1) patch.h = size.h
+            // Width changes about the centre, so text that shrinks to fit (or
+            // a box that comes back) stays where the user put it.
+            if (Math.abs(size.w - n.w) > 1) {
+              patch.w = size.w
+              patch.x = n.x + (n.w - size.w) / 2
+            }
+            if (Object.keys(patch).length > 0) updateNode(doc, id, patch, 'system')
+          }}
           onEndEdit={(id) => setEditingId((current) => (current === id ? null : current))}
           onDelete={deleteNodes}
           dragPreview={drag}
         />
       </World>
       <Overlay camera={camera} marquee={marquee} pending={pendingPath} />
+      {editNode && (
+        <FormatBar
+          anchor={screenBox(editNode)}
+          viewport={viewport}
+          style={readTextStyle(editNode.props)}
+          onPreset={(id) => setProps(editNode.id, applyPreset(editNode.props, id))}
+          onStepSize={(dir) => {
+            const { fontSize } = readTextStyle(editNode.props)
+            setProps(editNode.id, withTextStyle(editNode.props, { fontSize: stepFontSize(fontSize, dir) }))
+          }}
+          onToggle={(key) => {
+            const style = readTextStyle(editNode.props)
+            setProps(editNode.id, withTextStyle(editNode.props, { [key]: !style[key] }))
+          }}
+        />
+      )}
+      {wheelNode && (
+        <ColorWheel
+          // Keyed by node so the opening animation replays when it moves to
+          // another node, instead of the wheel sliding across.
+          key={wheelNode.id}
+          anchor={screenBox(wheelNode)}
+          viewport={viewport}
+          current={nodeColor(wheelNode)}
+          effective={nodeColor(wheelNode) ?? arrivingColor(wheelNode.id, edges, edgeColors)}
+          onPick={(color) => {
+            const { color: _old, ...rest } = wheelNode.props
+            setProps(wheelNode.id, color ? { ...rest, color } : rest)
+          }}
+        />
+      )}
     </div>
   )
+}
+
+/** A copy of the node map with the in-flight drag offset applied to the dragged nodes. */
+function offsetNodes(
+  byId: Map<NodeId, Node>,
+  drag: { ids: ReadonlySet<NodeId>; dx: number; dy: number },
+): Map<NodeId, Node> {
+  const out = new Map(byId)
+  for (const id of drag.ids) {
+    const n = out.get(id)
+    if (n) out.set(id, { ...n, x: n.x + drag.dx, y: n.y + drag.dy })
+  }
+  return out
+}
+
+/** The colour of the branch arriving at a node, if anything arrives at it. */
+function arrivingColor(
+  id: NodeId,
+  edges: { id: string; to: { nodeId: NodeId } }[],
+  colors: Map<string, string>,
+): string | null {
+  const arrived = edges.find((e) => e.to.nodeId === id)
+  return arrived ? (colors.get(arrived.id) ?? null) : null
 }

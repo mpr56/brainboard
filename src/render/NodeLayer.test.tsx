@@ -252,3 +252,23 @@ describe('NodeLayer', () => {
     })
   })
 })
+
+describe('NodeLayer box-less nodes', () => {
+  const bare = (): Node => ({ ...node('b1', 'bare'), props: { text: 'bare', boxless: true } })
+  const outer = () => document.querySelector<HTMLElement>('[data-node-id="b1"]')!
+
+  it('draws no card behind box-less text', () => {
+    layer({ nodes: [bare()], editingId: null })
+    expect(outer().style.background).toBe('transparent')
+    expect(outer().style.boxShadow).toBe('none')
+    expect(outer().style.borderColor).toBe('transparent')
+  })
+
+  // The border keeps its width so the box does not change size, and the
+  // selection still has an outline to show.
+  it('still outlines a selected box-less node', () => {
+    layer({ nodes: [bare()], editingId: null, selection: new Set(['b1']) })
+    expect(outer().style.borderStyle).toBe('dashed')
+    expect(outer().style.borderColor).toBe('rgb(45, 99, 214)')
+  })
+})

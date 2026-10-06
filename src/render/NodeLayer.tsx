@@ -58,6 +58,9 @@ const HANDLE_CSS = `
   color: #fff;
   border-color: #2d63d6;
 }
+[data-node-id][data-boxless="true"]:not([data-selected]):hover {
+  border-color: rgba(26,26,26,.28) !important;
+}
 [data-part="delete"]:hover {
   transform: scale(1.25);
   background: #c0392b;
@@ -108,7 +111,7 @@ type Props = {
   selection: Set<NodeId>
   editingId: NodeId | null
   onEdit: (id: NodeId, patch: Partial<Node>) => void
-  onMeasure: (id: NodeId, h: number) => void
+  onMeasure: (id: NodeId, size: { w: number; h: number }) => void
   onEndEdit: (id: NodeId) => void
   /** Removes this node and every connector touching it, as one undo step. */
   onDelete: (id: NodeId) => void
@@ -154,12 +157,17 @@ export function NodeLayer({
         const dragging = dragPreview?.ids.has(node.id) ?? false
         const dx = dragging ? dragPreview!.dx : 0
         const dy = dragging ? dragPreview!.dy : 0
+        // No card: the border stays (transparent) so the box keeps its size,
+        // and turns dashed so selection and hover still have an outline.
+        const boxless = node.props.boxless === true
         return (
           <div
             key={node.id}
             data-node-id={node.id}
             data-part="body"
             data-dragging={dragging ? 'true' : undefined}
+            data-selected={selected ? 'true' : undefined}
+            data-boxless={boxless ? 'true' : undefined}
             // No onDoubleClick here. The viewport captures the pointer on
             // pointer-down, and per the Pointer Events spec that retargets
             // `click`/`dblclick` to the capturing element — a handler bound
@@ -172,10 +180,12 @@ export function NodeLayer({
               width: node.w,
               minHeight: node.h,
               zIndex: node.z,
-              background: '#fdfcf9',
-              border: `2px solid ${selected ? '#2d63d6' : '#1a1a1a'}`,
+              background: boxless ? 'transparent' : '#fdfcf9',
+              border: boxless
+                ? `2px dashed ${selected ? '#2d63d6' : 'transparent'}`
+                : `2px solid ${selected ? '#2d63d6' : '#1a1a1a'}`,
               borderRadius: 10,
-              boxShadow: '4px 5px 0 rgba(26,26,26,.13)',
+              boxShadow: boxless ? 'none' : '4px 5px 0 rgba(26,26,26,.13)',
               boxSizing: 'border-box',
             }}
           >
@@ -206,7 +216,7 @@ export function NodeLayer({
               node={node}
               state={{ selected, editing: editingId === node.id }}
               onEdit={(patch) => onEdit(node.id, patch)}
-              onMeasure={(h) => onMeasure(node.id, h)}
+              onMeasure={(size) => onMeasure(node.id, size)}
               onEndEdit={() => onEndEdit(node.id)}
             />
             {HANDLE_DIRS.map((dir) => (

@@ -39,6 +39,9 @@ The board lives in IndexedDB under `brainstorm-canvas/default`. Deleting that da
 | Connect two nodes | Hover a node, then **drag** a `+` handle onto another node |
 | Add and connect at once | Drag a `+` handle onto empty canvas — the node is created where you let go |
 | Edit text | Double-click a node; click elsewhere or press `Esc` to finish |
+| Format text | While editing, use the bar above the node: Heading / Sub / Body / Small, `A−` / `A+`, **B** / *I* / U — or `⌘B` / `⌘I` / `⌘U` |
+| Text without a box | While editing, the dashed-square button at the end of the format bar toggles the card off and on |
+| Colour a branch | Click a node, pick from the colour wheel above it; **Auto** returns it to the branch colour. `Esc` closes it |
 | Move nodes | Drag them; drag empty canvas to marquee-select |
 | Delete one node | Hover it and click the **×** at its top-right |
 | Delete a selection | Select, then `Delete` / `Backspace` |
@@ -64,6 +67,22 @@ arrive. That taper is what shows direction, so there are no arrowheads. Colour f
 a connector takes the colour of the one that arrived at its source, and only a node with nothing
 pointing at it starts a new colour, cycling an eight-entry palette. While you drag one out, the
 preview is the same ribbon in the same colour, so you see what you are about to commit.
+
+Colours are resolved when the board is painted, not read off each stored connector. A node picked
+from the colour wheel colours the connector arriving at it and everything downstream, until another
+node with its own colour takes over. Connectors leaving a root keep the palette colour they were
+drawn with. Boards from before branch colours stored every connector as `#1a1a1a`; that value is
+treated as "no colour chosen", so those boards pick up palette colours too.
+
+Formatting — size, bold, italic, underline — belongs to the whole node and lives in its `props`
+next to `text`. The editor still commits plain text, so there is no stored markup.
+
+A node can also drop its card (`props.boxless`) and sit on the board as bare, centred text. A
+boxless node is as wide as its longest line, up to 260px, so connectors end at the words rather
+than at an invisible 220px edge. That width is measured — rule 1's one sanctioned measurement now
+reports width as well as height — and written under `'system'`, re-centred so the text stays put.
+A boxed node always reports 220, which is what restores full width when the box comes back,
+including by undo.
 
 ## Architecture
 
@@ -111,11 +130,11 @@ or a visible "saved" indicator, is a product decision that has not been taken ye
 Other gaps in this milestone:
 
 - Node resize is not implemented; text nodes auto-size to their content height only.
-- Connector colour is assigned automatically per branch and cannot be chosen or overridden.
+- Formatting applies to a whole node; there is no inline (part-of-the-text) bold or italic.
+- The colour wheel has no line-style options (Coggle's thickness / dash arcs).
 - Connector labels exist in the document model but have no UI. `style.arrow` is still stored and no
   longer painted — the taper carries direction instead.
 - Connectors cannot be selected or deleted on their own. Deleting either end deletes them.
-- A connector does not follow a node while you drag it; it catches up on release.
 - There is one board (`default`); there is no board list, export or import.
 - Media nodes, drag-and-drop ingest and time-anchored links are Plan 2.
 - If IndexedDB is unavailable (private browsing, exhausted quota), the board reports an error

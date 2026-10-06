@@ -1,9 +1,17 @@
 import { edgeEndpoint } from '../geometry/anchors'
 import { ribbonPath } from '../geometry/ribbon'
 import { routeEdge } from '../geometry/routeEdge'
-import type { Edge, Node, NodeId, Point } from '../types'
+import type { Edge, EdgeId, Node, NodeId, Point } from '../types'
 
-type Props = { edges: Edge[]; nodesById: Map<NodeId, Node> }
+type Props = {
+  edges: Edge[]
+  nodesById: Map<NodeId, Node>
+  /**
+   * Each connector's colour, resolved from branch structure and node colours by
+   * `resolveEdgeColors`. An edge missing from it paints with what it stored.
+   */
+  colors?: Map<EdgeId, string>
+}
 
 const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
 
@@ -21,7 +29,7 @@ const centreOf = (n: Node): Point => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 })
  * in the document because removing a persisted field is a migration, and Plan 2
  * may want it back for non-branch link types.
  */
-export function ConnectorLayer({ edges, nodesById }: Props) {
+export function ConnectorLayer({ edges, nodesById, colors }: Props) {
   return (
     <svg
       data-testid="connector-layer"
@@ -57,7 +65,7 @@ export function ConnectorLayer({ edges, nodesById }: Props) {
             data-edge-id={edge.id}
             data-edge-style={edge.style.kind}
             d={d}
-            fill={edge.style.color}
+            fill={colors?.get(edge.id) ?? edge.style.color}
             stroke="none"
             style={{ pointerEvents: 'fill' }}
           />

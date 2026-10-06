@@ -770,13 +770,128 @@ test('pointercancel clears an in-flight marquee instead of leaving a ghost box',
   await page.waitForTimeout(100)
   const nodeBox = await page.getByTestId('text-node-body').first().boundingBox()
   if (!nodeBox) throw new Error('expected node to be visible')
-  await page.mouse.move(nodeBox.x - 20, nodeBox.y - 20)
+  // Dragged from below-right: the node is open for editing, so its format bar
+  // occupies the space just above it, and a press there belongs to the bar.
+  await page.mouse.move(nodeBox.x + nodeBox.width + 20, nodeBox.y + nodeBox.height + 20)
   await page.mouse.down()
-  await page.mouse.move(nodeBox.x + nodeBox.width + 20, nodeBox.y + nodeBox.height + 20, { steps: 5 })
+  await page.mouse.move(nodeBox.x - 20, nodeBox.y - 5, { steps: 5 })
   await page.mouse.up()
   // No Escape: the marquee's own pointer-down on empty canvas is what ends the
   // edit session "+ Text" opened, so the keyboard is already back in command
   // mode by the time Delete arrives.
   await page.keyboard.press('Delete')
   await expect(page.getByTestId('text-node-body')).toHaveCount(0)
+})
+
+/** A root on screen with one child spawned to its east, both out of edit mode. */
+async function rootAndChild(page: Page) {
+  await page.getByTestId('add-text').click()
+  await page.mouse.click(600, 650)
+  await dragFromHandle(page, 0, 'e', { x: 900, y: 450 })
+  await page.mouse.click(600, 650)
+  await expect(page.getByTestId('text-node-body')).toHaveCount(2)
+  await expect(page.locator('[data-edge-id]')).toHaveCount(1)
+}
+
+test('a connector follows its node while the node is being dragged', async ({ page }) => {
+  await rootAndChild(page)
+  const edge = page.locator('[data-edge-id]')
+  const before = await edge.getAttribute('d')
+
+  const child = await page.getByTestId('text-node-body').nth(1).boundingBox()
+  if (!child) throw new Error('expected the child to be visible')
+  await page.mouse.move(child.x + 30, child.y + child.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(child.x + 30, child.y + 200, { steps: 8 })
+
+  // Mid-gesture: nothing is committed yet, but the connector is already there.
+  const during = await edge.getAttribute('d')
+  expect(during).not.toBe(before)
+
+  await page.mouse.up()
+  // And releasing does not jump it: the committed shape is the one shown.
+  await expect(edge).toHaveAttribute('d', during!)
+})
+
+test('clicking a node opens the colour wheel, and a swatch recolours its branch', async ({
+  page,
+}) => {
+  await rootAndChild(page)
+  await expect(page.getByTestId('color-wheel')).toHaveCount(0)
+
+  await page.getByTestId('text-node-body').nth(1).click()
+  await expect(page.getByTestId('color-wheel')).toBeVisible()
+  await page.getByTestId('swatch-#3c9bd0').click()
+  await expect(page.locator('[data-edge-id]')).toHaveAttribute('fill', '#3c9bd0')
+
+  // A grandchild continues the colour chosen for its parent.
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('color-wheel')).toHaveCount(0)
+  await dragFromHandle(page, 1, 'e', { x: 1150, y: 450 })
+  await page.mouse.click(600, 650)
+  const fills = await page
+    .locator('[data-edge-id]')
+    .evaluateAll((els) => els.map((e) => e.getAttribute('fill')))
+  expect(fills).toEqual(['#3c9bd0', '#3c9bd0'])
+
+  // Auto hands the branch back to the palette, and it is one undo step away.
+  await page.getByTestId('text-node-body').nth(1).click()
+  await page.getByTestId('swatch-auto').click()
+  await expect(page.locator('[data-edge-id]').first()).not.toHaveAttribute('fill', '#3c9bd0')
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.locator('[data-edge-id]').first()).toHaveAttribute('fill', '#3c9bd0')
+})
+
+test('the format bar styles the node being edited without ending the edit', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  const body = page.getByTestId('text-node-body').first()
+  await expect(page.getByTestId('format-bar')).toBeVisible()
+
+  await page.getByTestId('preset-heading').click()
+  await expect(body).toHaveCSS('font-size', '26px')
+  await expect(body).toHaveCSS('font-weight', '700')
+  await expect(page.getByTestId('preset-heading')).toHaveAttribute('aria-pressed', 'true')
+
+  // Still editing: the click did not take focus, so typing still lands.
+  await expect(body).toHaveAttribute('contenteditable', 'true')
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('Big idea')
+  await page.keyboard.press('ControlOrMeta+i')
+  await expect(body).toHaveCSS('font-style', 'italic')
+
+  await page.getByTestId('size-up').click()
+  await expect(body).toHaveCSS('font-size', '32px')
+
+  await page.mouse.click(600, 650)
+  await expect(page.getByTestId('format-bar')).toHaveCount(0)
+  await expect(body).toHaveText('Big idea')
+  await expect(body).toHaveCSS('font-style', 'italic')
+})
+
+test('a node can drop its box, shrink to its text, and get the box back', async ({ page }) => {
+  await page.getByTestId('add-text').click()
+  await page.keyboard.press('ControlOrMeta+A')
+  await page.keyboard.type('Hi')
+  const outer = page.locator('[data-node-id]').first()
+  const boxed = (await outer.boundingBox())!
+
+  await page.getByTestId('toggle-box').click()
+  await page.mouse.click(600, 650)
+
+  await expect(outer).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  // Shrunk to the text, about the same centre.
+  await expect.poll(async () => (await outer.boundingBox())!.width).toBeLessThan(100)
+  const bare = (await outer.boundingBox())!
+  expect(Math.abs(bare.x + bare.width / 2 - (boxed.x + boxed.width / 2))).toBeLessThan(2)
+
+  // The text was committed after the toggle, so the first undo takes back the
+  // text and the second brings the card back — full width, centred where it was.
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.getByTestId('text-node-body')).toHaveText('New idea')
+  await expect(outer).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(async () => (await outer.boundingBox())!.width).toBeCloseTo(boxed.width, 0)
+  await expect(outer).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  const back = (await outer.boundingBox())!
+  expect(Math.abs(back.x - boxed.x)).toBeLessThan(2)
 })

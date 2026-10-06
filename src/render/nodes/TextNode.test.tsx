@@ -143,3 +143,32 @@ describe('TextNode', () => {
     expect(screen.getByText('updated from sync')).toBeDefined()
   })
 })
+
+describe('TextNode formatting', () => {
+  const styled = (props: Record<string, unknown>) => ({ ...node, props: { ...node.props, ...props } })
+
+  it('sets its text from the node`s style', () => {
+    render(
+      <View node={styled({ fontSize: 26, bold: true, italic: true, underline: true })} state={{ selected: false, editing: false }} onEdit={vi.fn()} onMeasure={vi.fn()} onEndEdit={vi.fn()} />,
+    )
+    const el = screen.getByTestId('text-node-body')
+    expect(el.style.fontSize).toBe('26px')
+    expect(el.style.fontWeight).toBe('700')
+    expect(el.style.fontStyle).toBe('italic')
+    expect(el.style.textDecoration).toBe('underline')
+  })
+
+  it('toggles bold on ⌘B while editing, keeping the rest of props', () => {
+    const onEdit = vi.fn()
+    render(<View node={styled({ color: '#123456' })} state={{ selected: true, editing: true }} onEdit={onEdit} onMeasure={vi.fn()} onEndEdit={vi.fn()} />)
+    fireEvent.keyDown(screen.getByTestId('text-node-body'), { key: 'b', metaKey: true })
+    expect(onEdit).toHaveBeenCalledWith({ props: { text: 'hello world', color: '#123456', bold: true } })
+  })
+
+  it('leaves ⌘B alone when not editing', () => {
+    const onEdit = vi.fn()
+    render(<View node={node} state={{ selected: true, editing: false }} onEdit={onEdit} onMeasure={vi.fn()} onEndEdit={vi.fn()} />)
+    fireEvent.keyDown(screen.getByTestId('text-node-body'), { key: 'b', metaKey: true })
+    expect(onEdit).not.toHaveBeenCalled()
+  })
+})

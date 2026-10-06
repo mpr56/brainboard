@@ -15,6 +15,12 @@ export function screenToWorld(p: Point, cam: Camera): Point {
   return { x: p.x / cam.zoom + cam.x, y: p.y / cam.zoom + cam.y }
 }
 
+/** A world-space rect as it appears on screen — what a screen-space popover anchors to. */
+export function worldRectToScreen(r: Rect, cam: Camera): Rect {
+  const tl = worldToScreen({ x: r.x, y: r.y }, cam)
+  return { x: tl.x, y: tl.y, w: r.w * cam.zoom, h: r.h * cam.zoom }
+}
+
 export function visibleWorldRect(
   cam: Camera,
   viewport: { w: number; h: number },
