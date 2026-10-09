@@ -1,0 +1,92 @@
+import { describe, expect, it } from 'vitest'
+import { createDoc, transact } from './schema'
+import { addNode, getNode, listNodes, updateNode, removeNode } from './nodes'
+import { addEdge, listEdges } from './edges'
+import { createUndoManager } from './undo'
+
+const text = { type: 'text', x: 0, y: 0, w: 200, h: 80, props: {} } as const
+
+describe('createUndoManager', () => {
+  it('undoes a user-origin creation', () => {
+    const doc = createDoc()
+    const undo = createUndoManager(doc)
+    addNode(doc, text)
+    expect(listNodes(doc)).toHaveLength(1)
+    undo.undo()
+    expect(listNodes(doc)).toHaveLength(0)
+  })
+
+  it('redoes what it undid', () => {
+    const doc = createDoc()
+    const undo = createUndoManager(doc)
+    addNode(doc, text)
+    undo.undo()
+    undo.redo()
+    expect(listNodes(doc)).toHaveLength(1)
+  })
+
+  it('ignores system-origin writes', () => {
+    const doc = createDoc()
+    const id = addNode(doc, text)
+    const undo = createUndoManager(doc)
+    updateNode(doc, id, { h: 120 }, 'system')
+    expect(undo.canUndo()).toBe(false)
+    expect(getNode(doc, id)!.h).toBe(120)
+  })
+
+  it('does not let a system write hide a user write from undo', () => {
+    const doc = createDoc()
+    const id = addNode(doc, text)
+    const undo = createUndoManager(doc)
+    updateNode(doc, id, { x: 500 }, 'user')
+    updateNode(doc, id, { h: 120 }, 'system')
+    undo.undo()
+    expect(getNode(doc, id)!.x).toBe(0)
+    expect(getNode(doc, id)!.h).toBe(120)
+  })
+
+  it('collapses nested transact() calls into one undo step', () => {
+    // Yjs transactions are reentrant: nested transact() calls join the outer
+    // transaction. This test proves that multiple node updates within one
+    // transact() call produce exactly one undo step. This is independent of
+    // captureTimeout and enables multi-node drag gestures to undo atomically.
+    const doc = createDoc()
+    const a = addNode(doc, text)
+    const b = addNode(doc, text)
+    const undo = createUndoManager(doc)
+    transact(doc, 'user', () => {
+      updateNode(doc, a, { x: 100 }, 'user')
+      updateNode(doc, b, { x: 100 }, 'user')
+    })
+    undo.undo()
+    expect(getNode(doc, a)!.x).toBe(0)
+    expect(getNode(doc, b)!.x).toBe(0)
+    expect(undo.canUndo()).toBe(false)
+  })
+
+  it('treats two separate transactions as two undo steps', () => {
+    const doc = createDoc()
+    const id = addNode(doc, text)
+    const undo = createUndoManager(doc)
+    updateNode(doc, id, { x: 10 }, 'user')
+    updateNode(doc, id, { x: 20 }, 'user')
+    undo.undo()
+    expect(getNode(doc, id)!.x).toBe(10)
+    undo.undo()
+    expect(getNode(doc, id)!.x).toBe(0)
+  })
+
+  it('undoes node deletion and its cascaded edge deletions in one step', () => {
+    const doc = createDoc()
+    const a = addNode(doc, text)
+    const b = addNode(doc, text)
+    addEdge(doc, { from: { nodeId: a }, to: { nodeId: b } })
+    const undo = createUndoManager(doc)
+    removeNode(doc, a)
+    expect(listNodes(doc)).toHaveLength(1)
+    expect(listEdges(doc)).toHaveLength(0)
+    undo.undo()
+    expect(listNodes(doc)).toHaveLength(2)
+    expect(listEdges(doc)).toHaveLength(1)
+  })
+})
